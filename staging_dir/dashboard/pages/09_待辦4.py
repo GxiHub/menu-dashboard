@@ -40,80 +40,8 @@ user_short = user.split("@")[0]
 
 st.markdown("""
 <style>
-/* === Background === */
-.stApp { background-color: #f0f2f5 !important; }
+/* === Page layout === */
 .block-container { padding-top: 4rem !important; max-width: 900px !important; }
-
-/* === Page header === */
-.page-title    { font-size: 1.85rem; font-weight: 800; color: #1a1a1a; line-height: 1.2; margin: 0; }
-.page-subtitle { font-size: 0.88rem; color: #9e9e9e; margin-top: 3px; }
-
-/* === Primary green button === */
-button[kind="primary"] {
-    background-color: #3dba6e !important;
-    border-color: #3dba6e !important;
-    border-radius: 99px !important;
-    font-weight: 600 !important;
-    box-shadow: 0 2px 8px rgba(61,186,110,0.3) !important;
-}
-button[kind="primary"]:hover {
-    background-color: #34a862 !important;
-    border-color: #34a862 !important;
-}
-
-/* === Status tabs === */
-.stTabs [data-baseweb="tab-list"] {
-    gap: 4px !important;
-    border-bottom: 2px solid #e8e8e8 !important;
-    background: transparent !important;
-    padding-bottom: 0 !important;
-}
-.stTabs [data-baseweb="tab"] {
-    border-radius: 8px 8px 0 0 !important;
-    padding: 7px 18px !important;
-    font-size: 0.83rem !important;
-    font-weight: 500 !important;
-    color: #9e9e9e !important;
-    background: transparent !important;
-    border: none !important;
-}
-.stTabs [aria-selected="true"] {
-    color: #2ea85a !important;
-    background: white !important;
-    border-bottom: 2px solid #3dba6e !important;
-    font-weight: 700 !important;
-}
-.stTabs [data-testid="stTabsContent"] {
-    padding-top: 14px !important;
-    border: none !important;
-    background: transparent !important;
-}
-
-/* === Expander as card === */
-[data-testid="stExpander"] {
-    background: white !important;
-    border-radius: 16px !important;
-    border: none !important;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.06) !important;
-    margin-bottom: 10px !important;
-    overflow: hidden !important;
-    transition: box-shadow 0.15s !important;
-}
-[data-testid="stExpander"]:hover {
-    box-shadow: 0 4px 18px rgba(0,0,0,0.10) !important;
-}
-[data-testid="stExpander"] summary {
-    padding: 15px 20px !important;
-    font-weight: 600 !important;
-    font-size: 0.95rem !important;
-    background: white !important;
-    border-radius: 16px 16px 0 0 !important;
-}
-[data-testid="stExpander"] summary:hover { background: #fafafa !important; }
-[data-testid="stExpander"] > details { border: none !important; }
-[data-testid="stExpander"] [data-testid="stExpanderDetails"] {
-    padding: 2px 20px 18px 20px !important;
-}
 
 /* === Task meta & badges === */
 .todo-meta { color: #9e9e9e; font-size: 0.80rem; margin-bottom: 8px; line-height: 1.6; }
@@ -125,6 +53,7 @@ button[kind="primary"]:hover {
 .sp-doing   { background: #eff6ff; color: #3b82f6; }
 .sp-blocked { background: #fef2f2; color: #ef4444; }
 .sp-done    { background: #e8f5ee; color: #2ea85a; }
+.sp-private { background: #f5f3ff; color: #7c3aed; }
 .overdue-badge {
     display: inline-block; background: #fef2f2; color: #ef4444;
     border-radius: 4px; padding: 1px 7px;
@@ -136,36 +65,20 @@ button[kind="primary"]:hover {
     font-size: 0.72rem; font-weight: 500; margin-right: 4px; margin-bottom: 2px;
 }
 
-/* === Search & filter inputs === */
-.stTextInput > div > div > input {
-    border-radius: 12px !important; background: white !important;
-    border-color: #e8e8e8 !important; font-size: 0.9rem !important;
-}
-.stTextInput > div > div > input:focus {
-    border-color: #3dba6e !important;
-    box-shadow: 0 0 0 2px rgba(61,186,110,0.15) !important;
-}
-.stSelectbox > div > div { border-radius: 12px !important; background: white !important; }
-.stMultiSelect > div { border-radius: 12px !important; background: white !important; }
-.stRadio > div { gap: 4px !important; }
-.stRadio label { font-size: 0.85rem !important; }
-
-/* === Action buttons inside card === */
-[data-testid="stExpander"] .stButton > button[kind="secondary"] {
-    border-radius: 8px !important; font-size: 0.80rem !important;
-    border-color: #e8e8e8 !important; color: #555 !important; padding: 4px 12px !important;
-}
-
-/* === Private badge === */
-.sp-private { background: #f5f3ff; color: #7c3aed; }
-
 /* === Empty state === */
 .empty-todo { text-align: center; padding: 48px 20px; color: #bbb; }
 .empty-todo-icon { font-size: 2.5rem; }
 .empty-todo-text { font-size: 0.9rem; margin-top: 8px; }
 
-/* === Dividers === */
-hr { border-color: #f0f0f0 !important; margin: 10px 0 !important; }
+/* === Page-specific widget tweaks === */
+.stSelectbox > div > div { border-radius: 12px !important; background: white !important; }
+.stMultiSelect > div { border-radius: 12px !important; background: white !important; }
+.stRadio > div { gap: 4px !important; }
+.stRadio label { font-size: 0.85rem !important; }
+[data-testid="stExpander"] .stButton > button[kind="secondary"] {
+    border-radius: 8px !important; font-size: 0.80rem !important;
+    border-color: #e8e8e8 !important; color: #555 !important; padding: 4px 12px !important;
+}
 .stAlert { border-radius: 12px !important; }
 .stCheckbox > label { font-size: 0.85rem !important; color: #666 !important; }
 </style>

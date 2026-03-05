@@ -37,37 +37,37 @@ def _edit_dialog():
         return
     row = match.iloc[0]; idx = match.index[0]
     with st.form("dlg_edit_form"):
-        st.markdown("**基本資訊**")
-        c1, c2 = st.columns(2)
-        with c1:
-            product_name = st.text_input("產品名稱", value=_ss(row.get("產品名稱")))
-            category     = st.text_input("分類",     value=_ss(row.get("分類")))
-            vendor       = st.text_input("廠商",     value=_ss(row.get("廠商")))
-        with c2:
-            product_id   = st.text_input("產品編號", value=_ss(row.get("產品編號")))
-            unit         = st.text_input("單位數量", value=_ss(row.get("單位")))
-            price_note   = st.text_input("售價備註", value=_ss(row.get("售價備註")))
-            shelf_life   = st.text_input("保存期限", value=_ss(row.get("保存期限")))
-        st.markdown("**價格 / 成本**")
-        c1, c2 = st.columns(2)
-        with c1: sale_price = st.number_input("產品售價", value=_sf(row.get("產品售價")), min_value=0.0, step=1.0)
-        with c2: pkg_price  = st.number_input("單包進貨價", value=_sf(row.get("單包進貨價")), min_value=0.0, step=0.1)
-        st.markdown("**重量**")
-        c1, c2 = st.columns(2)
-        with c1: unit_grams = st.number_input("商品單位克數 (g)", value=_sf(row.get("商品單位克數")), min_value=0.0, step=1.0)
-        with c2: pkg_weight = st.number_input("單包重量 (g)", value=_sf(row.get("單包重量")), min_value=0.0, step=1.0)
-        if pkg_weight > 0 and unit_grams > 0 and pkg_price > 0:
-            calc_cost = round(pkg_price * (unit_grams / pkg_weight), 2)
-            st.info(f"📊 單位成本 = {pkg_price} × ({unit_grams}g / {pkg_weight}g) = **{calc_cost} 元**")
-        else:
-            calc_cost = _sf(row.get("單位成本"))
-            st.info(f"📊 單位成本（現有）：{calc_cost} 元（請填入重量以自動計算）")
-        st.markdown("**狀態**")
-        c1, c2, c3 = st.columns(3)
-        with c1: is_available = st.checkbox("是否上架",     value=_sb(row.get("是否上架")))
-        with c2: is_menu_item = st.checkbox("是否菜單品項", value=_sb(row.get("是否菜單品項")))
-        with c3: is_prepared  = st.checkbox("是否現場準備", value=_sb(row.get("是否現場準備")))
-        note = st.text_area("備註", value=_ss(row.get("備註")), height=80)
+        tab_basic, tab_price, tab_status = st.tabs(["📋 基本", "💰 價格與重量", "⚙️ 狀態與備註"])
+        with tab_basic:
+            c1, c2 = st.columns(2)
+            with c1:
+                product_name = st.text_input("產品名稱", value=_ss(row.get("產品名稱")))
+                category     = st.text_input("分類",     value=_ss(row.get("分類")))
+                vendor       = st.text_input("廠商",     value=_ss(row.get("廠商")))
+            with c2:
+                product_id   = st.text_input("產品編號", value=_ss(row.get("產品編號")))
+                unit         = st.text_input("單位數量", value=_ss(row.get("單位")))
+        with tab_price:
+            c1, c2 = st.columns(2)
+            with c1: sale_price = st.number_input("產品售價", value=_sf(row.get("產品售價")), min_value=0.0, step=1.0)
+            with c2: pkg_price  = st.number_input("單包進貨價", value=_sf(row.get("單包進貨價")), min_value=0.0, step=0.1)
+            c1, c2 = st.columns(2)
+            with c1: unit_grams = st.number_input("商品單位克數 (g)", value=_sf(row.get("商品單位克數")), min_value=0.0, step=1.0)
+            with c2: pkg_weight = st.number_input("單包重量 (g)", value=_sf(row.get("單包重量")), min_value=0.0, step=1.0)
+            if pkg_weight > 0 and unit_grams > 0 and pkg_price > 0:
+                calc_cost = round(pkg_price * (unit_grams / pkg_weight), 2)
+                st.info(f"📊 單位成本 = {pkg_price} × ({unit_grams}g / {pkg_weight}g) = **{calc_cost} 元**")
+            else:
+                calc_cost = _sf(row.get("單位成本"))
+                st.info(f"📊 單位成本（現有）：{calc_cost} 元（請填入重量以自動計算）")
+            price_note = st.text_input("售價備註", value=_ss(row.get("售價備註")))
+        with tab_status:
+            c1, c2, c3 = st.columns(3)
+            with c1: is_available = st.checkbox("是否上架",     value=_sb(row.get("是否上架")))
+            with c2: is_menu_item = st.checkbox("是否菜單品項", value=_sb(row.get("是否菜單品項")))
+            with c3: is_prepared  = st.checkbox("是否現場準備", value=_sb(row.get("是否現場準備")))
+            shelf_life = st.text_input("保存期限", value=_ss(row.get("保存期限")))
+            note = st.text_area("備註", value=_ss(row.get("備註")), height=80)
         submitted = st.form_submit_button("💾 儲存", use_container_width=True, type="primary")
     if submitted:
         backup_db("before_single_save")

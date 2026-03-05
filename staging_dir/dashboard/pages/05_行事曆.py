@@ -32,13 +32,9 @@ user_short = user.split("@")[0]
 # ── CSS (mobile-first, iPhone style) ───────────────────────────────────────────
 st.markdown("""
 <style>
-.stApp { background-color: #f0f2f5 !important; }
+/* Page layout override */
 .block-container { padding-top: 2.5rem !important; max-width: 540px !important;
                    padding-left: 1rem !important; padding-right: 1rem !important; }
-
-/* Page header */
-.page-title    { font-size: 1.55rem; font-weight: 800; color: #1a1a1a; margin: 0; }
-.page-subtitle { font-size: 0.82rem; color: #9e9e9e; margin-top: 2px; }
 
 /* Group header pill */
 .group-pill {
@@ -127,32 +123,7 @@ st.markdown("""
 .member-info { font-size: 0.88rem; color: #333; }
 .member-role { font-size: 0.72rem; color: #aaa; }
 
-/* Tabs */
-.stTabs [data-baseweb="tab-list"] {
-    gap: 4px !important; border-bottom: 2px solid #e8e8e8 !important;
-    background: transparent !important; padding-bottom: 0 !important;
-}
-.stTabs [data-baseweb="tab"] {
-    border-radius: 8px 8px 0 0 !important; padding: 7px 14px !important;
-    font-size: 0.82rem !important; font-weight: 500 !important;
-    color: #9e9e9e !important; background: transparent !important; border: none !important;
-}
-.stTabs [aria-selected="true"] {
-    color: #2ea85a !important; background: white !important;
-    border-bottom: 2px solid #3dba6e !important; font-weight: 700 !important;
-}
-/* primary green */
-button[kind="primary"] {
-    background-color: #3dba6e !important; border-color: #3dba6e !important;
-    border-radius: 12px !important; font-weight: 700 !important;
-}
-button[kind="primary"]:hover { background-color: #34a862 !important; }
-
-/* Form inputs */
-.stTextInput > div > div > input {
-    border-radius: 10px !important; border-color: #e8e8e8 !important; font-size: 0.9rem !important;
-}
-.stTextInput > div > div > input:focus { border-color: #3dba6e !important; }
+/* Form extras (not covered by base CSS) */
 .stSelectbox > div > div { border-radius: 10px !important; }
 .stTextArea textarea { border-radius: 10px !important; border-color: #e8e8e8 !important; }
 </style>
