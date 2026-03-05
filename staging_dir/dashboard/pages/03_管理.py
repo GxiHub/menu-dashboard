@@ -12,7 +12,7 @@ from pathlib import Path
 import pandas as pd
 import streamlit as st
 
-from ui_common import apply_base_css, render_sidebar_admin, load_menu_df_cn, to_en
+from ui_common import apply_base_css, render_sidebar_admin, load_menu_df_cn, to_en, invalidate_menu_cache
 from rbac import require_page, get_user_email, log_access
 from app.backup import backup_db, restore_prev
 from app.crud import save_df
@@ -32,30 +32,17 @@ log_access(user, "管理")
 
 st.markdown("""
 <style>
-.stApp { background-color: #f0f2f5 !important; }
+/* Page-specific overrides only — base styles in ui_common.py */
 .block-container { padding-top: 4rem !important; max-width: 900px !important; }
-.page-title    { font-size: 1.85rem; font-weight: 800; color: #1a1a1a; line-height: 1.2; margin: 0; }
-.page-subtitle { font-size: 0.88rem; color: #9e9e9e; margin-top: 3px; margin-bottom: 0.5rem; }
+.page-subtitle { margin-bottom: 0.5rem; }
 
-button[kind="primary"] {
-    background-color: #3dba6e !important; border-color: #3dba6e !important;
-    border-radius: 99px !important; font-weight: 600 !important;
-    box-shadow: 0 2px 8px rgba(61,186,110,0.3) !important;
-}
-button[kind="primary"]:hover { background-color: #34a862 !important; }
+.admin-card { background: white; border-radius: var(--radius-lg, 16px); padding: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.06); margin-bottom: 12px; }
+.metric-card { background: white; border-radius: var(--radius-md, 12px); padding: 16px 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
+.metric-label { font-size: 0.75rem; color: var(--color-text-muted, #9e9e9e); font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; }
+.metric-value { font-size: 1.1rem; font-weight: 800; color: var(--color-text, #1a1a1a); margin-top: 4px; word-break: break-all; }
+.metric-sub   { font-size: 0.75rem; color: var(--color-text-muted, #9e9e9e); margin-top: 2px; }
 
-.stTabs [data-baseweb="tab-list"] { gap: 4px !important; border-bottom: 2px solid #e8e8e8 !important; background: transparent !important; }
-.stTabs [data-baseweb="tab"] { border-radius: 8px 8px 0 0 !important; padding: 7px 18px !important; font-size: 0.83rem !important; font-weight: 500 !important; color: #9e9e9e !important; background: transparent !important; border: none !important; }
-.stTabs [aria-selected="true"] { color: #2ea85a !important; background: white !important; border-bottom: 2px solid #3dba6e !important; font-weight: 700 !important; }
-.stTabs [data-testid="stTabsContent"] { padding-top: 14px !important; border: none !important; background: transparent !important; }
-
-.admin-card { background: white; border-radius: 16px; padding: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.06); margin-bottom: 12px; }
-.metric-card { background: white; border-radius: 12px; padding: 16px 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
-.metric-label { font-size: 0.75rem; color: #9e9e9e; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; }
-.metric-value { font-size: 1.1rem; font-weight: 800; color: #1a1a1a; margin-top: 4px; word-break: break-all; }
-.metric-sub   { font-size: 0.75rem; color: #9e9e9e; margin-top: 2px; }
-
-.env-badge { display: inline-block; border-radius: 99px; padding: 2px 12px; font-size: 0.78rem; font-weight: 700; vertical-align: middle; margin-left: 8px; }
+.env-badge { display: inline-block; border-radius: var(--radius-pill, 99px); padding: 2px 12px; font-size: 0.78rem; font-weight: 700; vertical-align: middle; margin-left: 8px; }
 .env-staging { background: #fff7ed; color: #ea580c; }
 .env-prod    { background: #eff6ff; color: #3b82f6; }
 
@@ -64,7 +51,11 @@ button[kind="primary"]:hover { background-color: #34a862 !important; }
 .backup-row { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid #f0f0f0; font-size: 0.83rem; }
 .backup-row:last-child { border-bottom: none; }
 .backup-name { color: #444; font-family: monospace; }
-.backup-meta { color: #9e9e9e; white-space: nowrap; margin-left: 12px; }
+.backup-meta { color: var(--color-text-muted, #9e9e9e); white-space: nowrap; margin-left: 12px; }
+
+@media (max-width: 640px) {
+  .block-container { max-width: 100% !important; padding-top: 2rem !important; }
+}
 </style>
 """, unsafe_allow_html=True)
 
@@ -166,7 +157,7 @@ with t2:
     with col_b1:
         if st.button("💾 立即備份", type="primary", use_container_width=True):
             ok = backup_db("manual_admin")
-            st.success("✅ 備份完成！") if ok else st.error("備份失敗（找不到 DB？）")
+            st.toast("✅ 備份完成！") if ok else st.toast("❌ 備份失敗", icon="🚨")
             st.rerun()
     with col_b2:
         if st.button("⚠️ 還原上一次備份", use_container_width=True):
@@ -250,7 +241,8 @@ with t3:
                     save_df(to_en(df_new))
                 except Exception:
                     save_df(df_new)
-                st.success(f"✅ 已匯入 {len(df_new)} 筆，舊資料已自動備份！")
+                invalidate_menu_cache()
+                st.toast(f"✅ 已匯入 {len(df_new)} 筆，舊資料已自動備份！")
                 st.rerun()
         except Exception as e:
             st.error(f"CSV 解析失敗：{e}")

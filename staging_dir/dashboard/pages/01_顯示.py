@@ -4,7 +4,7 @@ from pathlib import Path
 
 import streamlit as st
 
-from ui_common import apply_base_css, load_menu_df_cn, add_margin_cols, keyword_filter, render_sidebar_admin, to_en
+from ui_common import apply_base_css, load_menu_df_cn, invalidate_menu_cache, add_margin_cols, keyword_filter, render_sidebar_admin, to_en
 from app.backup import backup_db
 from app.crud import save_df
 
@@ -90,6 +90,7 @@ def _edit_dialog():
         df_new.at[idx, "備註"]         = note
         df_new.at[idx, "保存期限"]     = shelf_life
         save_df(to_en(df_new))
+        invalidate_menu_cache()
         st.session_state.pop("edit_item_pid",  None)
         st.session_state.pop("edit_item_name", None)
         st.session_state["open_edit_dialog"] = False
@@ -116,56 +117,12 @@ render_sidebar_admin()
 # ── CSS ───────────────────────────────────────────────────────────────────────
 st.markdown("""
 <style>
-.stApp { background-color: #f0f2f5 !important; }
+/* Page-level layout override */
 .block-container { padding-top: 4rem !important; max-width: 900px !important; }
 .page-title    { font-size: 1.85rem; font-weight: 800; color: #1a1a1a; line-height: 1.2; margin: 0; }
 .page-subtitle { font-size: 0.88rem; color: #9e9e9e; margin-top: 3px; }
 
-/* Search & multiselect */
-.stTextInput > div > div > input {
-    border-radius: 12px !important; background: white !important;
-    border-color: #e8e8e8 !important; font-size: 0.9rem !important; padding: 10px 16px !important;
-}
-.stTextInput > div > div > input:focus {
-    border-color: #3dba6e !important; box-shadow: 0 0 0 2px rgba(61,186,110,0.15) !important;
-}
-.stMultiSelect > div { border-radius: 12px !important; background: white !important; border-color: #e8e8e8 !important; }
-.stMultiSelect [data-baseweb="tag"] { background-color: #e0e7ff !important; border-radius: 99px !important; }
-.stMultiSelect [data-baseweb="tag"] span { color: #3730a3 !important; font-weight: 600 !important; }
-
-/* Category tabs */
-.stTabs [data-baseweb="tab-list"] { gap: 4px !important; border-bottom: 2px solid #e8e8e8 !important; background: transparent !important; }
-.stTabs [data-baseweb="tab"] { border-radius: 8px 8px 0 0 !important; padding: 7px 16px !important; font-size: 0.82rem !important; font-weight: 500 !important; color: #9e9e9e !important; background: transparent !important; border: none !important; }
-.stTabs [aria-selected="true"] { color: #2ea85a !important; background: white !important; border-bottom: 2px solid #3dba6e !important; font-weight: 700 !important; }
-.stTabs [data-testid="stTabsContent"] { padding-top: 14px !important; border: none !important; background: transparent !important; }
-
-/* === Expander as product card (same style as todo) === */
-[data-testid="stExpander"] {
-    background: white !important;
-    border-radius: 16px !important;
-    border: none !important;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.06) !important;
-    margin-bottom: 10px !important;
-    overflow: hidden !important;
-    transition: box-shadow 0.15s !important;
-}
-[data-testid="stExpander"]:hover {
-    box-shadow: 0 4px 18px rgba(0,0,0,0.10) !important;
-}
-[data-testid="stExpander"] summary {
-    padding: 15px 20px !important;
-    font-weight: 600 !important;
-    font-size: 0.95rem !important;
-    background: white !important;
-    border-radius: 16px 16px 0 0 !important;
-}
-[data-testid="stExpander"] summary:hover { background: #fafafa !important; }
-[data-testid="stExpander"] > details { border: none !important; }
-[data-testid="stExpander"] [data-testid="stExpanderDetails"] {
-    padding: 4px 20px 18px 20px !important;
-}
-
-/* Product meta tags */
+/* Product meta tags (page-specific) */
 .prod-tag {
     display: inline-block; border-radius: 99px;
     padding: 2px 10px; font-size: 0.73rem; font-weight: 600; margin-right: 4px;
@@ -181,18 +138,15 @@ st.markdown("""
 .prod-detail-key { color: #9e9e9e; font-weight: 600; }
 .prod-detail-val { color: #1a1a1a; font-weight: 700; text-align: right; }
 
-/* Action button inside card */
-[data-testid="stExpander"] .stButton > button[kind="secondary"] {
-    border-radius: 8px !important; font-size: 0.80rem !important;
-    border-color: #e8e8e8 !important; color: #555 !important; padding: 4px 12px !important;
-}
-button[kind="primary"] { background-color: #3dba6e !important; border-color: #3dba6e !important; border-radius: 99px !important; font-weight: 600 !important; }
-
-/* Empty state */
+/* Empty state (page-specific) */
 .empty-todo { text-align: center; padding: 48px 20px; color: #bbb; }
 .empty-todo-icon { font-size: 2.5rem; }
 .empty-todo-text { font-size: 0.9rem; margin-top: 8px; }
-hr { border-color: #f0f0f0 !important; margin: 10px 0 !important; }
+
+/* Mobile RWD */
+@media (max-width: 640px) {
+    .block-container { max-width: 100% !important; padding-top: 2rem !important; }
+}
 </style>
 """, unsafe_allow_html=True)
 

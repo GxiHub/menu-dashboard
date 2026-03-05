@@ -1,3 +1,4 @@
+import os
 import streamlit as st
 import pandas as pd
 
@@ -6,37 +7,142 @@ from app.schema import EN_TO_CN, CN_TO_EN
 
 
 def apply_base_css() -> None:
-    """Base UI styles + mobile (RWD) tweaks."""
+    """Unified design-system CSS with custom properties + mobile (RWD) tweaks."""
     st.markdown(
         """
 <style>
-/* Global spacing */
-.block-container { padding-top: 1.0rem; padding-bottom: 1.6rem; max-width: 1200px; }
+/* ══════════════ Design Tokens (CSS Custom Properties) ══════════════ */
+:root {
+  --color-primary: #3dba6e;
+  --color-primary-hover: #34a660;
+  --color-bg: #f0f2f5;
+  --color-card: white;
+  --color-border: #e8e8e8;
+  --color-text: #1a1a1a;
+  --color-text-muted: #9e9e9e;
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-pill: 99px;
+}
 
-/* Card-like metrics */
+/* ══════════════ Global ══════════════ */
+.stApp { background: var(--color-bg); }
+.block-container { padding-top: 1.0rem; padding-bottom: 1.6rem; max-width: 1200px; }
+h1, h2, h3 { letter-spacing: -0.2px; color: var(--color-text); }
+hr { border-color: var(--color-border); }
+
+/* ══════════════ Page Title / Subtitle ══════════════ */
+.page-title {
+  font-size: 1.6rem; font-weight: 700; color: var(--color-text);
+  margin-bottom: 0.2rem; letter-spacing: -0.3px;
+}
+.page-subtitle {
+  font-size: 0.95rem; color: var(--color-text-muted);
+  margin-bottom: 1.2rem;
+}
+
+/* ══════════════ Card-like Metrics ══════════════ */
 [data-testid="stMetric"] {
-  background: rgba(246,247,251,1);
-  border: 1px solid rgba(17,24,39,0.08);
-  border-radius: 16px;
+  background: var(--color-card);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
   padding: 12px 14px;
 }
 
-/* Make data tables easier to scroll on mobile */
+/* ══════════════ Buttons ══════════════ */
+div.stButton > button {
+  border-radius: var(--radius-pill);
+  min-height: 44px;
+  font-weight: 600;
+  transition: all 0.15s ease;
+}
+div.stButton > button[kind="primary"],
+div.stButton > button[data-testid="stBaseButton-primary"] {
+  background: var(--color-primary);
+  border: none;
+  color: white;
+  box-shadow: 0 2px 6px rgba(61,186,110,0.25);
+}
+div.stButton > button[kind="primary"]:hover,
+div.stButton > button[data-testid="stBaseButton-primary"]:hover {
+  background: var(--color-primary-hover);
+  box-shadow: 0 4px 12px rgba(61,186,110,0.35);
+}
+
+/* ══════════════ Tabs ══════════════ */
+div[data-testid="stTabs"] > div[role="tablist"] {
+  flex-wrap: nowrap !important;
+  overflow-x: auto !important;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  gap: 4px;
+}
+div[data-testid="stTabs"] > div[role="tablist"]::-webkit-scrollbar { display: none; }
+div[data-testid="stTabs"] button[role="tab"] {
+  flex-shrink: 0;
+  white-space: nowrap;
+  border-radius: var(--radius-pill);
+  padding: 6px 18px;
+  font-weight: 500;
+}
+div[data-testid="stTabs"] button[role="tab"][aria-selected="true"] {
+  background: var(--color-primary);
+  color: white;
+}
+
+/* ══════════════ Expander Cards ══════════════ */
+div[data-testid="stExpander"] {
+  background: var(--color-card);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+  transition: box-shadow 0.2s ease;
+  overflow: hidden;
+}
+div[data-testid="stExpander"]:hover {
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+}
+
+/* ══════════════ Inputs ══════════════ */
+div[data-testid="stTextInput"] input,
+div[data-testid="stNumberInput"] input,
+div[data-testid="stTextArea"] textarea {
+  border-radius: var(--radius-md) !important;
+  border: 1px solid var(--color-border);
+  transition: border-color 0.15s ease;
+}
+div[data-testid="stTextInput"] input:focus,
+div[data-testid="stNumberInput"] input:focus,
+div[data-testid="stTextArea"] textarea:focus {
+  border-color: var(--color-primary) !important;
+  box-shadow: 0 0 0 2px rgba(61,186,110,0.15);
+}
+
+/* ══════════════ Multiselect ══════════════ */
+div[data-testid="stMultiSelect"] > div {
+  border-radius: var(--radius-md) !important;
+}
+div[data-testid="stMultiSelect"] span[data-baseweb="tag"] {
+  background: var(--color-primary);
+  border-radius: var(--radius-sm);
+}
+
+/* ══════════════ Data Tables: mobile scroll ══════════════ */
 div[data-testid="stDataFrame"], div[data-testid="stDataEditor"] {
   overflow-x: auto;
 }
 
-/* --- RWD for phones --- */
-@media (max-width: 768px) {
-  .block-container { padding-left: 0.7rem; padding-right: 0.7rem; }
-  h1 { font-size: 1.35rem; }
-  h2 { font-size: 1.1rem; }
-  h3 { font-size: 1.0rem; }
-  [data-testid="stMetricValue"] { font-size: 1.6rem; }
-  [data-testid="stMetricLabel"] { font-size: 0.95rem; }
+/* ══════════════ Dialog: mobile fix ══════════════ */
+@media (max-width: 640px) {
+  div[data-testid="stDialog"] > div {
+    width: 95vw !important;
+    max-width: 95vw !important;
+  }
 }
 
-/* ── Top navigation: horizontally scrollable on mobile ── */
+/* ══════════════ Top Navigation: horizontally scrollable on mobile ══════════════ */
 [data-testid=stNavigation] {
     overflow-x: auto !important;
     overflow-y: hidden !important;
@@ -54,10 +160,16 @@ div[data-testid="stDataFrame"], div[data-testid="stDataEditor"] {
     white-space: nowrap !important;
 }
 
-
-/* Reduce top/bottom whitespace of widgets */
-div.stButton > button { border-radius: 12px; }
-h1, h2, h3 { letter-spacing: -0.2px; }
+/* ══════════════ RWD for phones ══════════════ */
+@media (max-width: 768px) {
+  .block-container { padding-left: 0.7rem; padding-right: 0.7rem; }
+  h1 { font-size: 1.35rem; }
+  h2 { font-size: 1.1rem; }
+  h3 { font-size: 1.0rem; }
+  [data-testid="stMetricValue"] { font-size: 1.6rem; }
+  [data-testid="stMetricLabel"] { font-size: 0.95rem; }
+  div.stButton > button { min-height: 48px; }
+}
 </style>
 """,
         unsafe_allow_html=True,
@@ -76,11 +188,17 @@ def safe_num(s: pd.Series) -> pd.Series:
     return pd.to_numeric(s, errors="coerce").fillna(0)
 
 
+@st.cache_data(ttl=60)
 def load_menu_df_cn() -> pd.DataFrame:
     df_en = get_all()
     if df_en is None or df_en.empty:
         return pd.DataFrame()
     return to_cn(df_en)
+
+
+def invalidate_menu_cache() -> None:
+    """Clear the cached menu DataFrame so next call re-reads DB."""
+    load_menu_df_cn.clear()
 
 
 def add_margin_cols(df: pd.DataFrame) -> pd.DataFrame:

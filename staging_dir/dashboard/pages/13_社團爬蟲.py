@@ -18,8 +18,9 @@ API_BASE = "http://172.20.0.1:5005"
 # ── 自訂樣式 ──────────────────────────────────────────────────────────────────
 st.markdown("""
 <style>
+/* Page-specific: dark-theme post cards */
 .post-card {
-    background: #16213e; border-radius: 12px; padding: 18px 20px;
+    background: #16213e; border-radius: var(--radius-md, 12px); padding: 18px 20px;
     margin-bottom: 14px; border: 1px solid #0f3460;
 }
 .post-author { font-weight: 700; color: #00d4ff; font-size: 1.05em; }
@@ -28,7 +29,7 @@ st.markdown("""
              word-break: break-word; color: #ddd; }
 .post-link a { color: #4a90d9; font-size: 0.85em; text-decoration: none; }
 .post-link a:hover { text-decoration: underline; }
-.comment-box { background: #0f1a35; border-radius: 8px; padding: 10px 14px;
+.comment-box { background: #0f1a35; border-radius: var(--radius-sm, 8px); padding: 10px 14px;
                margin-bottom: 6px; }
 .comment-author { font-weight: 600; color: #66b3ff; font-size: 0.9em; margin-bottom: 3px; }
 .comment-body { font-size: 0.88em; line-height: 1.5; color: #ccc;

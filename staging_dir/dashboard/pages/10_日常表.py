@@ -41,8 +41,7 @@ PERIODS = [
 # ── CSS ─────────────────────────────────────────────────────────────────────────
 st.markdown("""
 <style>
-/* ══ 基礎 ══ */
-.stApp { background-color: #f0f2f5 !important; }
+/* ══ 基礎（頁面特有） ══ */
 html, body, .stApp { overflow-x: hidden !important; max-width: 100vw !important; }
 
 /* ── 容器 padding ── */
@@ -62,16 +61,6 @@ section[data-testid="stMain"] > div[data-testid="stMainBlockContainer"] {
     box-sizing: border-box !important;
     width: 100% !important;
 }
-
-/* ── 裝飾 ── */
-.page-title    { font-size: 1.55rem; font-weight: 800; color: #1a1a1a; margin: 0; }
-.page-subtitle { font-size: 0.82rem; color: #9e9e9e; margin-top: 2px; }
-button[kind="primary"] {
-    background-color: #3dba6e !important; border-color: #3dba6e !important;
-    border-radius: 10px !important; font-weight: 700 !important;
-}
-.stDateInput > div > div > input { border-radius: 10px !important; }
-hr { border-color: #e8e8e8 !important; margin: 8px 0 !important; }
 
 /* ── 時段標題 ── */
 .period-label {
@@ -141,8 +130,7 @@ if st.session_state.get(_cache_key) != date_str:
     st.session_state[_cache_key] = date_str
 
 # ── Load data ────────────────────────────────────────────────────────────────────
-tags     = get_tags()
-schedule = get_schedule(date_str, user)
+tags = get_tags()
 
 # ── Brush selector (pills) ───────────────────────────────────────────────────────
 st.markdown("---")
@@ -153,6 +141,9 @@ brush = st.pills(
     options=brush_options,
     key="_brush",
 )
+
+if brush is None:
+    st.caption("👆 請先選擇一個活動，再點下方時段填入")
 
 # Custom text input (only when brush is custom)
 custom_text = ""
@@ -182,42 +173,47 @@ def _apply_brush(slot: str) -> None:
 
 
 # ── Render slot grid ─────────────────────────────────────────────────────────────
-for period_name, hours in PERIODS:
-    slots = [f"{h:02d}:{m:02d}" for h in hours for m in (0, 30)]
+@st.fragment
+def _render_schedule():
+    sched = get_schedule(date_str, user)
+    for period_name, hours in PERIODS:
+        slots = [f"{h:02d}:{m:02d}" for h in hours for m in (0, 30)]
 
-    st.markdown(f'<div class="period-label">{period_name}</div>', unsafe_allow_html=True)
+        st.markdown(f'<div class="period-label">{period_name}</div>', unsafe_allow_html=True)
 
-    # Build grid with st.columns (3 per row)
-    cols_per_row = 3
-    for row_start in range(0, len(slots), cols_per_row):
-        row_slots = slots[row_start:row_start + cols_per_row]
-        cols = st.columns(cols_per_row)
-        for i, slot in enumerate(row_slots):
-            val = schedule.get(slot, "")
-            with cols[i]:
-                # Determine display
-                if val == "睡眠":
-                    label = "💤 睡眠"
-                    btn_type = "secondary"
-                elif val:
-                    label = val
-                    btn_type = "primary"
-                else:
-                    label = "─"
-                    btn_type = "secondary"
+        # Build grid with st.columns (3 per row)
+        cols_per_row = 3
+        for row_start in range(0, len(slots), cols_per_row):
+            row_slots = slots[row_start:row_start + cols_per_row]
+            cols = st.columns(cols_per_row)
+            for i, slot in enumerate(row_slots):
+                val = sched.get(slot, "")
+                with cols[i]:
+                    # Determine display
+                    if val == "睡眠":
+                        label = "💤 睡眠"
+                        btn_type = "secondary"
+                    elif val:
+                        label = val
+                        btn_type = "primary"
+                    else:
+                        label = "─"
+                        btn_type = "secondary"
 
-                display = f"{slot}\n{label}"
-                if st.button(
-                    display,
-                    key=f"slot_{slot}",
-                    use_container_width=True,
-                    type=btn_type,
-                    disabled=(brush is None),
-                ):
-                    _apply_brush(slot)
-                    st.rerun()
+                    display = f"{slot}\n{label}"
+                    if st.button(
+                        display,
+                        key=f"slot_{slot}",
+                        use_container_width=True,
+                        type=btn_type,
+                        disabled=(brush is None),
+                    ):
+                        _apply_brush(slot)
+                        st.rerun(scope="fragment")
 
-st.divider()
+    st.divider()
+
+_render_schedule()
 
 # ── Tag management ───────────────────────────────────────────────────────────────
 with st.expander("🏷️ 標籤管理"):
