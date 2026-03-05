@@ -1,0 +1,464 @@
+import os
+import zipfile
+import shutil
+import subprocess
+import tempfile
+from datetime import datetime
+import streamlit as st
+from admin_panels import render_all as _render_admin_panels
+
+import pandas as pd
+import altair as alt
+
+from app.database import DB_PATH
+from app.loader import load_to_db
+from app.backup import backup_db, restore_prev
+from app.crud import get_all, save_df
+from app.schema import EN_TO_CN, CN_TO_EN
+
+PROJECT_ROOT = os.path.dirname(os.path.dirname(__file__))
+DATA_DIR = os.path.join(PROJECT_ROOT, "data")
+DATA_CSV_PATH = os.path.join(DATA_DIR, "menu_items.csv")
+VIEW_CSV_PATH = os.path.join(DATA_DIR, "menu_items_view.csv")
+
+# ---------------- Deploy settings ----------------
+# Default to the same base dir as systemd WorkingDirectory (/home/pi53/dashboard/current)
+DASHBOARD_BASE_DIR = os.environ.get("DASHBOARD_BASE_DIR", os.path.dirname(PROJECT_ROOT))
+DASHBOARD_UPLOADS_DIR = os.environ.get("DASHBOARD_UPLOADS_DIR", os.path.join(DASHBOARD_BASE_DIR, "uploads"))
+DASHBOARD_RELEASES_DIR = os.environ.get("DASHBOARD_RELEASES_DIR", os.path.join(DASHBOARD_BASE_DIR, "releases"))
+DASHBOARD_CURRENT_LINK = os.environ.get("DASHBOARD_CURRENT_LINK", os.path.join(DASHBOARD_BASE_DIR, "current"))
+DASHBOARD_RESTART_CMD = os.environ.get("DASHBOARD_RESTART_CMD", "sudo systemctl restart menu-dashboard.service")
+
+def _safe_extract_zip(zip_path: str, dest_dir: str) -> None:
+    """Safely extract zip into dest_dir (prevents Zip Slip)."""
+    os.makedirs(dest_dir, exist_ok=True)
+    with zipfile.ZipFile(zip_path, "r") as z:
+        for member in z.infolist():
+            member_path = os.path.normpath(os.path.join(dest_dir, member.filename))
+            if not member_path.startswith(os.path.abspath(dest_dir) + os.sep) and member_path != os.path.abspath(dest_dir):
+                raise RuntimeError(f"Unsafe path in zip: {member.filename}")
+        z.extractall(dest_dir)
+
+def _switch_current(new_release_dir: str) -> None:
+    # ln -sfn new_release_dir current
+    subprocess.run(["ln", "-sfn", new_release_dir, DASHBOARD_CURRENT_LINK], check=True)
+
+def _restart_service() -> None:
+    # Prefer explicit restart command (usually systemd). Needs sudoers NOPASSWD.
+    subprocess.run(DASHBOARD_RESTART_CMD.split(), check=True)
+
+def get_version():
+    p = os.path.join(PROJECT_ROOT, "VERSION.txt")
+    return open(p, "r", encoding="utf-8").read().strip() if os.path.exists(p) else "unknown"
+
+VERSION = get_version()
+
+st.set_page_config(page_title=f"菜單營運儀表板 {VERSION}", layout="wide")
+
+# --- Light, friendly styling ---
+st.markdown(
+    """
+<style>
+.block-container { padding-top: 1.2rem; padding-bottom: 2rem; }
+[data-testid="stMetric"] {
+  background: rgba(246,247,251,1);
+  border: 1px solid rgba(17,24,39,0.08);
+  border-radius: 16px;
+  padding: 12px 14px;
+}
+h1, h2, h3 { letter-spacing: -0.2px; }
+</style>
+""", unsafe_allow_html=True
+)
+
+st.title("📊 菜單營運儀表板")
+st.caption("流程：匯入 CSV → 編輯成本/售價 → 儲存 → 必要時回復上一版。")
+st.markdown(f"**版本：{VERSION}**")
+
+# ---------------- Sidebar (restored) ----------------
+with st.sidebar:
+    st.header("🛠️ 管理")
+
+    if os.path.exists(DB_PATH):
+        st.success("DB 正常")
+    else:
+        st.error("找不到資料庫（會在第一次匯入後建立）")
+
+    st.divider()
+
+    st.subheader("📂 上傳 CSV")
+    uploaded = st.file_uploader("選擇 CSV 檔案（中文/英文欄位皆可）", type=["csv"])
+
+    if uploaded is not None:
+        os.makedirs(DATA_DIR, exist_ok=True)
+        with open(DATA_CSV_PATH, "wb") as f:
+            f.write(uploaded.getbuffer())
+        st.success(f"已上傳：{uploaded.name} → data/menu_items.csv")
+
+        if st.button("✅ 立即匯入到資料庫", use_container_width=True):
+            backup_db("before_import")
+            load_to_db(DATA_CSV_PATH)
+            st.success("匯入完成")
+            st.rerun()
+
+    st.divider()
+
+    if st.button("🔄 重新匯入 CSV", use_container_width=True):
+        if not os.path.exists(DATA_CSV_PATH):
+            st.error("找不到 data/menu_items.csv")
+        else:
+            backup_db("before_reimport")
+            load_to_db(DATA_CSV_PATH)
+            st.success("已重新匯入")
+            st.rerun()
+
+    st.divider()
+
+    col_a, col_b = st.columns(2)
+    with col_a:
+        if st.button("💾 備份 DB", use_container_width=True):
+            backup_db("manual")
+            st.success("已備份")
+    with col_b:
+        if st.button("↩️ 回復上一次", use_container_width=True):
+            if restore_prev():
+                st.success("已回復")
+                st.rerun()
+            else:
+                st.error("沒有備份可回復")
+
+    st.divider()
+    st.caption("提示：匯入/儲存/重新匯入前都會自動備份，可用「回復上一次」救回誤操作。")
+
+
+    st.divider()
+    st.subheader("⬆️ 上傳 ZIP（更新系統）")
+    zip_up = st.file_uploader("選擇 .zip（整包 dashboard 專案）", type=["zip"], key="zip_uploader")
+    if zip_up is not None:
+        st.info("部署會：上傳 → 解壓到 releases → 切換 current → 重啟 menu-dashboard.service")
+        if st.button("🚀 部署並重啟", use_container_width=True):
+            try:
+                os.makedirs(DASHBOARD_UPLOADS_DIR, exist_ok=True)
+                os.makedirs(DASHBOARD_RELEASES_DIR, exist_ok=True)
+
+                ts = datetime.now().strftime("%Y%m%d_%H%M%S")
+                zip_name = os.path.basename(zip_up.name)
+                saved_zip = os.path.join(DASHBOARD_UPLOADS_DIR, f"{ts}_{zip_name}")
+                with open(saved_zip, "wb") as f:
+                    f.write(zip_up.getbuffer())
+
+                release_dir = os.path.join(DASHBOARD_RELEASES_DIR, f"{ts}_{zip_name.replace('.zip','')}")
+                # extract to a temp dir first then move (safer)
+                with tempfile.TemporaryDirectory() as tmpd:
+                    tmp_release = os.path.join(tmpd, "release")
+                    _safe_extract_zip(saved_zip, tmp_release)
+                    shutil.move(tmp_release, release_dir)
+
+                _switch_current(release_dir)
+                st.success(f"已切換 current → {release_dir}")
+
+                # restart (this process may terminate; show message first)
+                st.warning("即將重啟服務…（頁面可能短暫斷線）")
+                _restart_service()
+                st.success("已送出重啟指令，請稍等 3–10 秒後重新整理。")
+            except Exception as e:
+                st.error(f"部署失敗：{e}")
+                st.info(
+                    "如果重啟失敗，多半是 sudo 需要密碼。"
+                    "請加入 sudoers："
+                    "sudo visudo -f /etc/sudoers.d/menu-dashboard-restart"
+                    "內容：pi53 ALL=(root) NOPASSWD: /bin/systemctl restart menu-dashboard.service"
+                )
+
+# ---------------- Helpers ----------------
+def to_cn(df_en: pd.DataFrame) -> pd.DataFrame:
+    return df_en.rename(columns={c: EN_TO_CN.get(c, c) for c in df_en.columns})
+
+def to_en(df_cn: pd.DataFrame) -> pd.DataFrame:
+    return df_cn.rename(columns={c: CN_TO_EN.get(c, c) for c in df_cn.columns})
+
+def safe_num(s: pd.Series) -> pd.Series:
+    return pd.to_numeric(s, errors="coerce").fillna(0)
+
+# ---------------- Load data ----------------
+if os.path.exists(DATA_CSV_PATH):
+    st.info(f"資料來源：{DATA_CSV_PATH}")
+else:
+    st.warning("資料來源：尚未匯入（尚未找到 data/menu_items.csv）")
+
+df_en = get_all()
+if df_en.empty:
+    st.warning("目前沒有資料。請用左側「上傳 CSV」或「重新匯入 CSV」。")
+    st.stop()
+
+df = to_cn(df_en)
+all_cols = list(df.columns)
+
+# ---------------- KPI ----------------
+cost_col = "單位價格" if "單位價格" in df.columns else None
+price_col = "產品售價" if "產品售價" in df.columns else None
+
+if cost_col and price_col:
+    df["_成本"] = safe_num(df[cost_col])
+    df["_售價"] = safe_num(df[price_col])
+    df["毛利"] = df["_售價"] - df["_成本"]
+    df["毛利率"] = (df["毛利"] / df["_售價"].replace({0: None})).fillna(0)
+else:
+    df["毛利"] = 0
+    df["毛利率"] = 0
+
+total_items = int(len(df))
+avg_margin_pct = float(df["毛利率"].mean() * 100) if len(df) else 0.0
+low_margin_count = int((df["毛利率"] < 0.30).sum())
+has_price = int((safe_num(df[price_col]) > 0).sum()) if price_col else 0
+
+k1, k2, k3, k4 = st.columns([1, 1, 1, 1])
+k1.metric("📦 品項總數", f"{total_items}")
+k2.metric("💰 平均毛利率", f"{avg_margin_pct:.1f}%")
+k3.metric("⚠ 低毛利品項", f"{low_margin_count}", help="毛利率 < 30%")
+k4.metric("🏷️ 有設定售價", f"{has_price}" if price_col else "—")
+
+st.divider()
+
+# ---------------- Charts ----------------
+left, right = st.columns([1.2, 1])
+
+with left:
+    st.subheader("📈 毛利率分布")
+    chart = (
+        alt.Chart(df.assign(毛利率_pct=df["毛利率"] * 100))
+        .mark_bar()
+        .encode(
+            x=alt.X("毛利率_pct:Q", bin=alt.Bin(maxbins=20), title="毛利率 (%)"),
+            y=alt.Y("count():Q", title="品項數"),
+            tooltip=[alt.Tooltip("count():Q", title="品項數")],
+        )
+        .properties(height=280)
+    )
+    st.altair_chart(chart, use_container_width=True)
+
+with right:
+    st.subheader("🚦 低毛利警示清單")
+    warn = df.copy()
+    warn["毛利率(%)"] = (warn["毛利率"] * 100).round(1)
+    warn = warn.sort_values("毛利率", ascending=True)
+    warn = warn[warn["毛利率"] < 0.30].head(12)
+    if len(warn) == 0:
+        st.success("目前沒有低於 30% 的品項 🎉")
+    else:
+        show_cols = [c for c in ["產品項目", "廠商", "單位價格", "產品售價", "毛利", "毛利率(%)"] if c in warn.columns]
+        st.dataframe(warn[show_cols], use_container_width=True, height=280)
+
+st.divider()
+
+# ---------------- Search & display controls ----------------
+st.subheader("🔎 搜尋 & 顯示欄位")
+
+kw = st.text_input("關鍵字搜尋（會在所有欄位中搜尋）", value=st.session_state.get("kw", ""))
+st.session_state["kw"] = kw
+
+if "display_cols" not in st.session_state:
+    st.session_state.display_cols = all_cols
+
+st.multiselect(
+    "選擇畫面要顯示的欄位（不影響 DB）",
+    options=all_cols,
+    default=st.session_state.display_cols,
+    key="display_cols",
+)
+
+with st.expander("🧩 CSV 欄位輸出設定（輸出/匯出 CSV 要包含哪些欄位）", expanded=False):
+    if "csv_export_cols" not in st.session_state:
+        st.session_state.csv_export_cols = all_cols
+
+    st.multiselect(
+        "選擇要輸出到 CSV 的欄位（不影響 DB）",
+        options=all_cols,
+        default=st.session_state.csv_export_cols,
+        key="csv_export_cols",
+    )
+
+    export_cols = st.session_state.csv_export_cols if st.session_state.csv_export_cols else all_cols
+    export_df = df[export_cols]
+
+    c1, c2 = st.columns(2)
+    with c1:
+        st.download_button(
+            "⬇️ 下載 CSV（依選擇欄位）",
+            export_df.to_csv(index=False).encode("utf-8-sig"),
+            "menu_items_export.csv",
+            "text/csv",
+            use_container_width=True,
+        )
+    with c2:
+        if st.button("📝 產生 menu_items_view.csv（依選擇欄位）", use_container_width=True):
+            os.makedirs(DATA_DIR, exist_ok=True)
+            export_df.to_csv(VIEW_CSV_PATH, index=False, encoding="utf-8-sig")
+            st.success(f"已產生：{VIEW_CSV_PATH}")
+
+    if os.path.exists(VIEW_CSV_PATH):
+        st.info(f"目前 view 檔：{VIEW_CSV_PATH}")
+
+# Apply keyword filtering
+df_filtered = df.copy()
+if kw.strip():
+    pattern = kw.strip()
+    mask = df_filtered.astype(str).apply(lambda s: s.str.contains(pattern, case=False, na=False))
+    df_filtered = df_filtered[mask.any(axis=1)]
+
+display_cols = st.session_state.display_cols if st.session_state.display_cols else all_cols
+df_display = df_filtered[display_cols] if display_cols else df_filtered
+
+st.caption(f"目前顯示：{len(df_display)} 筆（DB 總筆數：{len(df)}）")
+
+edited_subset = st.data_editor(df_display, use_container_width=True, num_rows="dynamic")
+
+# Save (merge back into full df to avoid losing hidden columns)
+c3, c4 = st.columns([1, 1])
+with c3:
+    if st.button("💾 儲存變更到 DB", use_container_width=True):
+        backup_db("before_save")
+        df_new = df.copy()
+        df_new.update(edited_subset)  # align by index
+        save_df(to_en(df_new))
+        st.success("已儲存")
+        st.rerun()
+
+with c4:
+    if st.button("💾 同步寫回 data/menu_items.csv（完整欄位）", use_container_width=True):
+        os.makedirs(DATA_DIR, exist_ok=True)
+        df.to_csv(DATA_CSV_PATH, index=False, encoding="utf-8-sig")
+        st.success(f"已寫回：{DATA_CSV_PATH}")
+
+
+# ------------------------------
+# 🩺 系統健康檢查 (Menu Dashboard)
+# ------------------------------
+def _run_cmd(cmd: str, timeout: int = 10) -> str:
+    # Run shell cmd and return combined output (safe for dashboard diagnostics).
+    try:
+        p = subprocess.run(cmd, shell=True, text=True, capture_output=True, timeout=timeout)
+        out = (p.stdout or "").strip()
+        err = (p.stderr or "").strip()
+        if out and err:
+            return out + "" + err
+        return out or err or "(no output)"
+    except subprocess.TimeoutExpired:
+        return "[TIMEOUT] " + cmd
+    except Exception as e:
+        return "[ERROR] " + cmd + "" + str(e)
+
+with st.sidebar.expander("🩺 系統健康檢查 (Menu Dashboard)", expanded=False):
+    st.caption("快速檢查 systemd / current 版本 / port / HTTP / logs。")
+    if st.button("🔄 執行健康檢查", use_container_width=True):
+        ts = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        st.session_state["_healthcheck_ts"] = ts
+        st.session_state["_healthcheck_active"] = _run_cmd("systemctl is-active menu-dashboard.service", timeout=5)
+        st.session_state["_healthcheck_status"] = _run_cmd("systemctl --no-pager --full status menu-dashboard.service | sed -n '1,25p'", timeout=10)
+        st.session_state["_healthcheck_current"] = _run_cmd("readlink -f /home/pi53/dashboard/current", timeout=5)
+        st.session_state["_healthcheck_port"] = _run_cmd("ss -ltnp | grep ':8501' || true", timeout=5)
+        st.session_state["_healthcheck_http"] = _run_cmd("curl -I -s http://127.0.0.1:8501/ | head -n 12 || true", timeout=8)
+        st.session_state["_healthcheck_logs"] = _run_cmd("journalctl -u menu-dashboard.service -n 80 --no-pager || true", timeout=10)
+
+    last_ts = st.session_state.get("_healthcheck_ts")
+    if last_ts:
+        st.caption("最後檢查時間：" + last_ts)
+        st.markdown("**1) service is-active**")
+        st.code(st.session_state.get("_healthcheck_active", ""), language="text")
+        st.markdown("**2) service status (前 25 行)**")
+        st.code(st.session_state.get("_healthcheck_status", ""), language="text")
+        st.markdown("**3) current 指向**")
+        st.code(st.session_state.get("_healthcheck_current", ""), language="text")
+        st.markdown("**4) 8501 監聽狀態**")
+        st.code(st.session_state.get("_healthcheck_port", ""), language="text")
+        st.markdown("**5) HTTP 回應 (curl -I)**")
+        st.code(st.session_state.get("_healthcheck_http", ""), language="text")
+        st.markdown("**6) 最近 80 行 logs**")
+        st.code(st.session_state.get("_healthcheck_logs", ""), language="text")
+# ------------------------------
+# 🧩 部署管理 (Staging → Production)
+# ------------------------------
+def _sh(cmd: str, timeout: int = 20) -> str:
+    try:
+        p = subprocess.run(cmd, shell=True, text=True, capture_output=True, timeout=timeout)
+        out = (p.stdout or "").strip()
+        err = (p.stderr or "").strip()
+        if out and err:
+            return out + "" + err
+        return out or err or "(no output)"
+    except Exception as e:
+        return "[ERROR] " + str(e)
+
+with st.sidebar.expander("🧩 部署管理 (Staging → Production)", expanded=False):
+    st.caption("流程：先部署到 staging(8502) 測試 → OK 才 Promote 到 production(8501)。")
+
+    current = _sh("readlink -f /home/pi53/dashboard/current || true", timeout=5)
+    staging = _sh("readlink -f /home/pi53/dashboard/staging || true", timeout=5)
+    previous = _sh("readlink -f /home/pi53/dashboard/previous || true", timeout=5)
+
+    st.markdown("**Current (Prod)**")
+    st.code(current, language="text")
+    st.markdown("**Staging (Test)**")
+    st.code(staging, language="text")
+    st.markdown("**Previous (Rollback)**")
+    st.code(previous, language="text")
+
+    col1, col2 = st.columns(2)
+    with col1:
+        if st.button("✅ Promote（把 Staging 進版到正式）", use_container_width=True):
+            st.write(_sh("sudo /home/pi53/dashboard/bin/promote_to_prod.sh", timeout=60))
+            st.write("Prod URL: http://192.168.1.111:8501")
+    with col2:
+        if st.button("↩️ Rollback（回上一版正式）", use_container_width=True):
+            st.write(_sh("sudo /home/pi53/dashboard/bin/rollback_prod.sh", timeout=60))
+            st.write("Prod URL: http://192.168.1.111:8501")
+
+    st.divider()
+    st.caption("Staging URL: http://192.168.1.111:8502")
+
+
+
+# ------------------------------
+# 📦 Zip 上傳 → 部署到 Staging
+# ------------------------------
+with st.sidebar.expander("📦 Zip 上傳 → 部署到 Staging", expanded=False):
+
+    uploaded = st.file_uploader("上傳 .zip 檔案", type=["zip"])
+
+    if uploaded is not None:
+
+        ts = datetime.now().strftime("%Y%m%d_%H%M%S")
+        base_path = "/home/pi53/dashboard"
+        releases_path = f"{base_path}/releases/{ts}"
+
+        os.makedirs(releases_path, exist_ok=True)
+
+        zip_path = f"/tmp/upload_{ts}.zip"
+        with open(zip_path, "wb") as f:
+            f.write(uploaded.getbuffer())
+
+        unzip_cmd = f"unzip -o {zip_path} -d {releases_path}"
+        unzip_result = subprocess.run(unzip_cmd, shell=True, capture_output=True, text=True)
+
+        entrypoint = f"{releases_path}/dashboard/dashboard.py"
+
+        if not os.path.exists(entrypoint):
+            st.error("❌ 找不到 dashboard/dashboard.py，部署中止")
+        else:
+            # 更新 staging symlink
+            subprocess.run(f"ln -sfn {releases_path} {base_path}/staging", shell=True)
+
+            # 重啟 staging service
+            restart = subprocess.run(
+                "sudo systemctl restart menu-dashboard-staging.service",
+                shell=True,
+                capture_output=True,
+                text=True,
+            )
+
+            st.success("✅ 已部署到 Staging")
+            st.code(f"Staging URL: http://192.168.1.111:8502", language="text")
+            st.caption("測試完成後，再到部署管理區按 Promote。")
+
+# Admin panels (deploy/health/upload)
+_render_admin_panels()
