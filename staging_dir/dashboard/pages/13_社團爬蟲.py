@@ -88,7 +88,7 @@ def load_saved_groups():
 
 
 # ── 主頁面 Tab ────────────────────────────────────────────────────────────────
-tab_search, tab_history, tab_manage = st.tabs(["🔍 搜尋", "📚 歷史記錄", "⚙️ 管理社團"])
+tab_search, tab_history, tab_stats, tab_manage = st.tabs(["🔍 搜尋", "📚 歷史記錄", "📊 統計分析", "⚙️ 管理社團"])
 
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -222,7 +222,75 @@ with tab_history:
 
 
 # ══════════════════════════════════════════════════════════════════════════════
-# Tab 3: 管理社團
+# Tab 3: 統計分析
+# ══════════════════════════════════════════════════════════════════════════════
+with tab_stats:
+    st.caption("分析爬取貼文中的地點、數量、預算、時間等資訊")
+
+    saved_groups_stats = load_saved_groups()
+    stats_group_options = {"全部社團": None}
+    for g in saved_groups_stats:
+        stats_group_options[g["group_name"]] = g["group_url"]
+
+    col_sg, col_refresh = st.columns([4, 1])
+    with col_sg:
+        stats_group_name = st.selectbox(
+            "篩選社團", list(stats_group_options.keys()), key="stats_group_sel"
+        )
+    with col_refresh:
+        st.markdown("<br>", unsafe_allow_html=True)
+        btn_refresh = st.button("重新整理", key="stats_refresh")
+
+    stats_url = stats_group_options[stats_group_name]
+    qs = f"?group_url={stats_url}" if stats_url else ""
+
+    try:
+        stats_data = requests.get(f"{API_BASE}/api/stats{qs}", timeout=5).json()
+    except Exception:
+        stats_data = None
+
+    if not stats_data or stats_data.get("total_posts", 0) == 0:
+        st.info("尚無統計資料，請先爬取貼文")
+    else:
+        src_label = f"「{stats_data.get('group_name', '')}」" if stats_data.get("group_name") else "全部社團"
+        st.markdown(f"**{src_label}** — 共分析 **{stats_data['total_posts']}** 篇貼文")
+
+        categories = [
+            ("locations", "📍 熱門地點", "地點", "次數"),
+            ("quantities", "📦 需求數量", "數量", "次數"),
+            ("budgets", "💰 預算範圍", "預算", "次數"),
+            ("times", "⏰ 日期 / 時間", "時間", "次數"),
+            ("people", "👥 人數需求", "人數", "次數"),
+        ]
+
+        col_left, col_right = st.columns(2)
+        for idx, (key, title, col_label, cnt_label) in enumerate(categories):
+            items = stats_data.get(key, [])
+            target_col = col_left if idx % 2 == 0 else col_right
+            with target_col:
+                st.markdown(f"#### {title}")
+                if not items:
+                    st.caption("尚無資料")
+                else:
+                    max_count = items[0][1] if items else 1
+                    for rank, (val, cnt) in enumerate(items[:10], 1):
+                        pct = int((cnt / max_count) * 100)
+                        st.markdown(
+                            f'<div style="margin-bottom:8px;">'
+                            f'<div style="display:flex;justify-content:space-between;font-size:0.9em;">'
+                            f'<span style="color:#ddd;">{rank}. {val}</span>'
+                            f'<span style="color:#00d4ff;font-weight:700;">{cnt}</span>'
+                            f'</div>'
+                            f'<div style="background:#0f3460;border-radius:3px;height:6px;margin-top:3px;">'
+                            f'<div style="background:#00d4ff;height:100%;border-radius:3px;width:{pct}%;"></div>'
+                            f'</div></div>',
+                            unsafe_allow_html=True,
+                        )
+                st.markdown("")
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# Tab 4: 管理社團
 # ══════════════════════════════════════════════════════════════════════════════
 with tab_manage:
     st.caption("新增或移除常用社團")
