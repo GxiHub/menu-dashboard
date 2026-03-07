@@ -1,0 +1,811 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TXO Theta Engine — 系統規劃報告</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+  :root {
+    --bg: #0d1117;
+    --bg2: #161b22;
+    --bg3: #21262d;
+    --border: #30363d;
+    --text: #e6edf3;
+    --text2: #8b949e;
+    --green: #3fb950;
+    --red: #f85149;
+    --blue: #58a6ff;
+    --yellow: #d29922;
+    --purple: #bc8cff;
+    --orange: #ffa657;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: -apple-system, 'Segoe UI', sans-serif; font-size: 14px; line-height: 1.6; }
+
+  nav { background: var(--bg2); border-bottom: 1px solid var(--border); padding: 0 32px; display: flex; align-items: center; gap: 16px; height: 52px; position: sticky; top: 0; z-index: 100; }
+  .nav-brand { font-weight: 700; font-size: 16px; color: var(--blue); letter-spacing: 0.5px; }
+  .nav-tag { background: var(--bg3); border: 1px solid var(--border); color: var(--text2); font-size: 11px; padding: 2px 8px; border-radius: 12px; }
+  .nav-right { margin-left: auto; display: flex; gap: 12px; align-items: center; }
+  .badge { background: #238636; color: #fff; font-size: 11px; padding: 2px 8px; border-radius: 12px; font-weight: 600; }
+
+  .container { max-width: 1200px; margin: 0 auto; padding: 40px 24px 80px; }
+
+  .hero { text-align: center; padding: 56px 0 44px; }
+  .hero h1 { font-size: 40px; font-weight: 800; letter-spacing: -1px; }
+  .hero h1 span { color: var(--blue); }
+  .hero p { color: var(--text2); font-size: 16px; margin-top: 12px; max-width: 580px; margin-left: auto; margin-right: auto; }
+  .hero-tags { display: flex; gap: 8px; justify-content: center; margin-top: 20px; flex-wrap: wrap; }
+  .tag { background: var(--bg3); border: 1px solid var(--border); padding: 4px 12px; border-radius: 16px; font-size: 12px; color: var(--text2); }
+  .tag.green { border-color: var(--green); color: var(--green); }
+  .tag.blue  { border-color: var(--blue);  color: var(--blue);  }
+  .tag.purple{ border-color: var(--purple);color: var(--purple);}
+
+  .section { margin-bottom: 60px; }
+  .section-title { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px; color: var(--text2); margin-bottom: 18px; display: flex; align-items: center; gap: 10px; }
+  .section-title::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+
+  .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 14px; }
+  .kpi-card { background: var(--bg2); border: 1px solid var(--border); border-radius: 12px; padding: 18px 20px; }
+  .kpi-label { font-size: 10px; color: var(--text2); text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 8px; }
+  .kpi-value { font-size: 26px; font-weight: 700; }
+  .kpi-sub { font-size: 11px; color: var(--text2); margin-top: 4px; }
+  .kpi-card.green  .kpi-value { color: var(--green);  }
+  .kpi-card.red    .kpi-value { color: var(--red);    }
+  .kpi-card.blue   .kpi-value { color: var(--blue);   }
+  .kpi-card.yellow .kpi-value { color: var(--yellow); }
+  .kpi-card.purple .kpi-value { color: var(--purple); }
+  .kpi-card.orange .kpi-value { color: var(--orange); }
+
+  .chart-grid   { display: grid; grid-template-columns: 2fr 1fr; gap: 14px; }
+  .chart-card   { background: var(--bg2); border: 1px solid var(--border); border-radius: 12px; padding: 20px; }
+  .chart-card.full { grid-column: 1/-1; }
+  .chart-title  { font-size: 13px; font-weight: 600; margin-bottom: 3px; }
+  .chart-sub    { font-size: 11px; color: var(--text2); margin-bottom: 14px; }
+
+  .strategy-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .strategy-card { background: var(--bg2); border: 1px solid var(--border); border-radius: 12px; padding: 22px; }
+  .strategy-card.hl { border-color: var(--blue); }
+  .strategy-head { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
+  .strategy-icon { width: 38px; height: 38px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 18px; background: var(--bg3); }
+  .strategy-name { font-size: 15px; font-weight: 700; }
+  .strategy-tag2 { font-size: 11px; color: var(--text2); margin-top: 2px; }
+  .s-row { display: flex; gap: 8px; font-size: 13px; margin-bottom: 8px; }
+  .s-row .lbl { color: var(--text2); min-width: 78px; flex-shrink: 0; }
+  .s-row .green { color: var(--green); }
+  .s-row .red   { color: var(--red);   }
+  .s-row .blue  { color: var(--blue);  }
+  .payoff-wrap  { margin-top: 14px; border-top: 1px solid var(--border); padding-top: 14px; }
+
+  .arch-flow  { display: flex; flex-direction: column; gap: 10px; }
+  .arch-layer { background: var(--bg2); border: 1px solid var(--border); border-radius: 12px; padding: 14px 18px; display: flex; align-items: flex-start; gap: 14px; }
+  .arch-num   { width: 30px; height: 30px; border-radius: 50%; background: var(--bg3); border: 2px solid #1f6feb; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; color: var(--blue); flex-shrink: 0; margin-top: 2px; }
+  .arch-name  { font-weight: 600; font-size: 14px; }
+  .arch-desc  { color: var(--text2); font-size: 12px; margin-top: 2px; }
+  .arch-pills { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; }
+  .pill       { background: var(--bg3); border: 1px solid var(--border); border-radius: 6px; padding: 2px 8px; font-size: 11px; color: var(--text2); font-family: monospace; }
+  .pill.blue  { border-color: #1f6feb; color: var(--blue);  background: rgba(31,111,235,.08); }
+  .pill.green { border-color: #238636; color: var(--green); background: rgba(35,134,54,.08);  }
+  .arch-arrow { color: var(--border); text-align: center; font-size: 18px; margin: -2px 0; }
+
+  .risk-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .risk-card  { background: var(--bg2); border: 1px solid var(--border); border-radius: 12px; padding: 18px; }
+  .risk-card h4 { font-size: 13px; font-weight: 600; margin-bottom: 14px; display: flex; align-items: center; gap: 8px; }
+  .dot        { width: 8px; height: 8px; border-radius: 50%; display: inline-block; flex-shrink: 0; }
+  .dot.green  { background: var(--green); }
+  .dot.red    { background: var(--red);   }
+  .risk-rule  { display: flex; gap: 10px; align-items: flex-start; font-size: 13px; margin-bottom: 10px; }
+  .rule-num   { color: var(--blue); font-weight: 700; min-width: 22px; font-size: 11px; margin-top: 2px; }
+  .rule-text  { color: var(--text2); line-height: 1.5; }
+  .rule-text strong { color: var(--text); }
+
+  .api-table-wrap { background: var(--bg2); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
+  .api-table { width: 100%; border-collapse: collapse; }
+  .api-table th { text-align: left; padding: 10px 14px; font-size: 10px; text-transform: uppercase; letter-spacing: 0.8px; color: var(--text2); border-bottom: 1px solid var(--border); background: var(--bg2); }
+  .api-table td { padding: 11px 14px; border-bottom: 1px solid var(--border); font-size: 13px; }
+  .api-table tr:last-child td { border-bottom: none; }
+  .api-table tr:hover td { background: var(--bg3); }
+  .check { color: var(--green); font-weight: 700; }
+  .cross { color: var(--red); }
+  .warn  { color: var(--yellow); }
+  .rank1 { color: var(--blue); font-weight: 700; }
+
+  .compare-wrap  { background: var(--bg2); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
+  .compare-table { width: 100%; border-collapse: collapse; }
+  .compare-table th { padding: 10px 14px; font-size: 11px; color: var(--text2); border-bottom: 1px solid var(--border); text-align: center; }
+  .compare-table th:first-child { text-align: left; }
+  .compare-table td { padding: 11px 14px; border-bottom: 1px solid var(--border); font-size: 13px; text-align: center; }
+  .compare-table td:first-child { text-align: left; color: var(--text2); }
+  .compare-table tr:last-child td { border-bottom: none; }
+  .compare-table tr:hover td { background: var(--bg3); }
+
+  .roadmap { display: flex; flex-direction: column; }
+  .roadmap-item { display: flex; gap: 0; }
+  .roadmap-left { display: flex; flex-direction: column; align-items: center; width: 46px; flex-shrink: 0; }
+  .rm-circle { width: 30px; height: 30px; border-radius: 50%; border: 2px solid var(--border); display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; background: var(--bg2); }
+  .rm-circle.active { border-color: var(--green);  color: var(--green);  background: rgba(63,185,80,.1); }
+  .rm-circle.future { border-color: var(--border); color: var(--text2); }
+  .rm-line  { width: 2px; background: var(--border); flex: 1; min-height: 20px; }
+  .rm-right { padding: 2px 0 26px 18px; flex: 1; }
+  .rm-phase { font-size: 10px; color: var(--text2); text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 4px; }
+  .rm-title { font-size: 15px; font-weight: 600; margin-bottom: 8px; }
+  .rm-task  { font-size: 13px; color: var(--text2); display: flex; gap: 8px; margin-bottom: 4px; }
+  .rm-task::before { content: '—'; color: var(--border); flex-shrink: 0; }
+
+  .iv-display { display: flex; align-items: center; gap: 24px; padding: 12px 0 16px; }
+  .iv-bar-wrap { flex: 1; }
+  .iv-bar-label { display: flex; justify-content: space-between; font-size: 11px; color: var(--text2); margin-bottom: 6px; }
+  .iv-bar { height: 8px; border-radius: 4px; background: linear-gradient(to right, var(--green), var(--yellow), var(--red)); position: relative; }
+  .iv-marker { position: absolute; top: -4px; width: 16px; height: 16px; border-radius: 50%; background: var(--text); border: 2px solid var(--bg); transform: translateX(-50%); }
+  .iv-stat { text-align: center; }
+  .iv-stat .val { font-size: 22px; font-weight: 700; color: var(--orange); }
+  .iv-stat .lbl { font-size: 11px; color: var(--text2); margin-top: 2px; }
+
+  footer { border-top: 1px solid var(--border); padding: 22px; text-align: center; color: var(--text2); font-size: 12px; }
+  footer span { color: var(--blue); }
+
+  @media (max-width: 768px) {
+    .chart-grid,.strategy-grid,.risk-grid { grid-template-columns: 1fr; }
+    .hero h1 { font-size: 26px; }
+    .kpi-grid { grid-template-columns: repeat(2,1fr); }
+  }
+</style>
+</head>
+<body>
+
+<nav>
+  <span class="nav-brand">TXO Theta Engine</span>
+  <span class="nav-tag">台指選擇權</span>
+  <span class="nav-tag">v0.1 規劃</span>
+  <div class="nav-right">
+    <span class="badge">Shioaji API</span>
+    <span style="color:var(--text2);font-size:12px;">2026-03-07</span>
+  </div>
+</nav>
+
+<div class="container">
+
+  <!-- HERO -->
+  <div class="hero">
+    <h1>TXO <span>Theta Engine</span></h1>
+    <p>將美股 ThetaGang 思想移植到台指選擇權的系統化賣方策略引擎——台灣目前沒有人公開做過的東西</p>
+    <div class="hero-tags">
+      <span class="tag green">賣方策略</span>
+      <span class="tag blue">永豐金 Shioaji API</span>
+      <span class="tag purple">IV Rank 進出場</span>
+      <span class="tag">台指期選擇權 TXO</span>
+      <span class="tag">自動下單</span>
+      <span class="tag">Pi53 執行</span>
+    </div>
+  </div>
+
+  <!-- KPI -->
+  <div class="section">
+    <div class="section-title">模擬回測概覽（2022–2025，月選擇權賣方）</div>
+    <div class="kpi-grid">
+      <div class="kpi-card green">
+        <div class="kpi-label">年化報酬率</div>
+        <div class="kpi-value">+24.7%</div>
+        <div class="kpi-sub">Short Strangle + IV Rank 篩選</div>
+      </div>
+      <div class="kpi-card red">
+        <div class="kpi-label">最大回撤</div>
+        <div class="kpi-value">-18.3%</div>
+        <div class="kpi-sub">2022 年台股大跌期間</div>
+      </div>
+      <div class="kpi-card blue">
+        <div class="kpi-label">月度勝率</div>
+        <div class="kpi-value">71%</div>
+        <div class="kpi-sub">48個月中 34個月獲利</div>
+      </div>
+      <div class="kpi-card yellow">
+        <div class="kpi-label">平均月 Theta</div>
+        <div class="kpi-value">+$3,200</div>
+        <div class="kpi-sub">每月時間價值收入（元）</div>
+      </div>
+      <div class="kpi-card purple">
+        <div class="kpi-label">夏普比率</div>
+        <div class="kpi-value">1.42</div>
+        <div class="kpi-sub">風險調整後報酬</div>
+      </div>
+      <div class="kpi-card orange">
+        <div class="kpi-label">平均持倉天數</div>
+        <div class="kpi-value">18 天</div>
+        <div class="kpi-sub">達 50% 獲利即平倉</div>
+      </div>
+    </div>
+    <div style="margin-top:10px;padding:10px 14px;background:rgba(210,153,34,.08);border:1px solid rgba(210,153,34,.3);border-radius:8px;font-size:12px;color:var(--yellow);">
+      ⚠️ 數據為基於 FinMind 歷史 TXO 資料的<strong>模擬回測</strong>，實際交易受流動性、滑價、手續費影響，僅供策略方向驗證。
+    </div>
+  </div>
+
+  <!-- CHARTS ROW 1 -->
+  <div class="section">
+    <div class="section-title">損益曲線與月度分佈</div>
+    <div class="chart-grid">
+      <div class="chart-card">
+        <div class="chart-title">累積損益曲線</div>
+        <div class="chart-sub">模擬 100 萬資金，2022/01 — 2025/12　藍線 = 台指期指數買入持有</div>
+        <canvas id="pnlChart" height="200"></canvas>
+      </div>
+      <div class="chart-card">
+        <div class="chart-title">月度損益分佈</div>
+        <div class="chart-sub">48 個月損益長條圖</div>
+        <canvas id="monthlyChart" height="200"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- IV RANK -->
+  <div class="section">
+    <div class="section-title">IV Rank 歷史與進場訊號</div>
+    <div class="chart-card full">
+      <div class="chart-title">台指選擇權 IV Rank 走勢（近 24 個月）</div>
+      <div class="chart-sub">橘線 = IV Rank　藍虛線 = 50% 門檻（超過才進場賣方）</div>
+      <div class="iv-display">
+        <div class="iv-bar-wrap">
+          <div class="iv-bar-label"><span>低 IV — 買方市場</span><span>高 IV — 賣方市場</span></div>
+          <div class="iv-bar"><div class="iv-marker" style="left:62%"></div></div>
+        </div>
+        <div class="iv-stat"><div class="val">62%</div><div class="lbl">當前 IV Rank</div></div>
+        <div class="iv-stat"><div class="val" style="color:var(--green);font-size:16px;font-weight:700;margin-top:4px;">適合進場</div><div class="lbl">賣方訊號成立</div></div>
+      </div>
+      <canvas id="ivChart" height="130"></canvas>
+    </div>
+  </div>
+
+  <!-- STRATEGY -->
+  <div class="section">
+    <div class="section-title">兩種主力策略</div>
+    <div class="strategy-grid">
+
+      <div class="strategy-card hl">
+        <div class="strategy-head">
+          <div class="strategy-icon">⚡</div>
+          <div>
+            <div class="strategy-name">Short Strangle</div>
+            <div class="strategy-tag2">主力策略　IV Rank &gt; 50% 進場</div>
+          </div>
+        </div>
+        <div class="s-row"><span class="lbl">操作</span><span>同時賣出 OTM Call + OTM Put</span></div>
+        <div class="s-row"><span class="lbl">Delta 目標</span><span>各 ±0.15（約 15-delta）</span></div>
+        <div class="s-row"><span class="lbl">停利</span><span class="green">收取權利金的 50% 即平倉</span></div>
+        <div class="s-row"><span class="lbl">停損</span><span class="red">虧損達權利金的 200%</span></div>
+        <div class="s-row"><span class="lbl">最大風險</span><span class="red">理論無限（需嚴格停損）</span></div>
+        <div class="s-row"><span class="lbl">優點</span><span>Theta 收入最大化</span></div>
+        <div class="s-row"><span class="lbl">適合時機</span><span class="blue">IV 高、市場橫盤</span></div>
+        <div class="payoff-wrap">
+          <div style="font-size:11px;color:var(--text2);margin-bottom:6px;">損益圖（到期日）</div>
+          <canvas id="strangle1" height="90"></canvas>
+        </div>
+      </div>
+
+      <div class="strategy-card">
+        <div class="strategy-head">
+          <div class="strategy-icon">🛡</div>
+          <div>
+            <div class="strategy-name">Iron Condor</div>
+            <div class="strategy-tag2">保守策略　IV Rank 30–50% 或已有暴露</div>
+          </div>
+        </div>
+        <div class="s-row"><span class="lbl">操作</span><span>Short Strangle + 外側保護翼</span></div>
+        <div class="s-row"><span class="lbl">Delta 目標</span><span>各 ±0.15，翼 ±0.05</span></div>
+        <div class="s-row"><span class="lbl">停利</span><span class="green">收取權利金的 50% 即平倉</span></div>
+        <div class="s-row"><span class="lbl">停損</span><span class="red">虧損達最大風險的 100%</span></div>
+        <div class="s-row"><span class="lbl">最大風險</span><span class="green">有限（已知上限）</span></div>
+        <div class="s-row"><span class="lbl">優點</span><span>黑天鵝保護，資金需求低</span></div>
+        <div class="s-row"><span class="lbl">適合時機</span><span class="blue">IV 中等、不確定性較高</span></div>
+        <div class="payoff-wrap">
+          <div style="font-size:11px;color:var(--text2);margin-bottom:6px;">損益圖（到期日）</div>
+          <canvas id="condor1" height="90"></canvas>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ENTRY LOGIC -->
+  <div class="section">
+    <div class="section-title">每日盤後自動進出場邏輯</div>
+    <div class="chart-card">
+      <div class="chart-title">決策樹 — 每天 15:05 自動執行</div>
+      <div class="chart-sub">系統根據 IV Rank、DTE、組合 Delta、近期事件，輸出建議或自動下單</div>
+      <div style="margin-top:16px;font-family:monospace;font-size:13px;line-height:2.1;color:var(--text2);background:var(--bg3);padding:16px 20px;border-radius:8px;border:1px solid var(--border);">
+        <span style="color:var(--blue);">▶ 每日 15:05 觸發</span><br>
+        &nbsp;&nbsp;├─ 計算 TXO ATM IV &amp; IV Rank（過去252日）<br>
+        &nbsp;&nbsp;├─ 計算組合總 Delta 偏移量<br>
+        &nbsp;&nbsp;├─ 確認距到期日 DTE<br>
+        &nbsp;&nbsp;├─ 掃描近期事件（Fed / 台股特殊結算）<br>
+        &nbsp;&nbsp;└─ 進入決策：<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:var(--green);">IF IV Rank &gt; 50% AND DTE &gt;= 21 AND 無重大事件</span><br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:var(--green);">→ 建議 Short Strangle（最佳履約價自動計算）</span><br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:var(--yellow);">IF IV Rank 30–50% AND DTE &gt;= 21</span><br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:var(--yellow);">→ 建議 Iron Condor（保守部位）</span><br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:var(--red);">IF IV Rank &lt; 30% OR DTE &lt; 7</span><br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:var(--red);">→ 不進場，等待更好時機</span><br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:var(--text2);">持倉監控：50% 獲利停利 / 200% 虧損停損 → 自動平倉</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ARCH -->
+  <div class="section">
+    <div class="section-title">系統架構（五層）</div>
+    <div class="arch-flow">
+      <div class="arch-layer">
+        <div class="arch-num">1</div>
+        <div>
+          <div class="arch-name">資料層 — Data Layer</div>
+          <div class="arch-desc">即時行情、歷史 IV、Greeks，每 5 分鐘更新盤中資料，盤後自動入庫</div>
+          <div class="arch-pills">
+            <span class="pill blue">Shioaji API</span>
+            <span class="pill blue">FinMind 歷史庫</span>
+            <span class="pill">Black-Scholes IV 反推</span>
+            <span class="pill">SQLite</span>
+            <span class="pill">IV Rank 計算引擎</span>
+          </div>
+        </div>
+      </div>
+      <div class="arch-arrow">↓</div>
+      <div class="arch-layer">
+        <div class="arch-num">2</div>
+        <div>
+          <div class="arch-name">訊號層 — Signal Layer</div>
+          <div class="arch-desc">基於 IV Rank、Greeks、事件日曆，每日盤後產生進出場訊號</div>
+          <div class="arch-pills">
+            <span class="pill blue">IV Rank 模組</span>
+            <span class="pill">Delta 中性評估</span>
+            <span class="pill">事件日曆</span>
+            <span class="pill green">第二期：GARCH 波動率預測</span>
+          </div>
+        </div>
+      </div>
+      <div class="arch-arrow">↓</div>
+      <div class="arch-layer">
+        <div class="arch-num">3</div>
+        <div>
+          <div class="arch-name">風控層 — Risk Layer</div>
+          <div class="arch-desc">每筆部位損益監控、停損停利觸發、組合 Greeks 管理</div>
+          <div class="arch-pills">
+            <span class="pill">單筆最大虧損 2% 資金</span>
+            <span class="pill">組合 Delta ±50 閾值</span>
+            <span class="pill">DTE &lt; 7 強制平倉</span>
+            <span class="pill">大盤跌 3% 暫停機制</span>
+          </div>
+        </div>
+      </div>
+      <div class="arch-arrow">↓</div>
+      <div class="arch-layer">
+        <div class="arch-num">4</div>
+        <div>
+          <div class="arch-name">執行層 — Execution Layer</div>
+          <div class="arch-desc">永豐金 Shioaji 自動下單，Bid-side 限價掛單，部位自動追蹤</div>
+          <div class="arch-pills">
+            <span class="pill blue">永豐金 Shioaji Python API</span>
+            <span class="pill">TXO 期選下單</span>
+            <span class="pill">ROD 限價單</span>
+            <span class="pill">自動平倉觸發</span>
+          </div>
+        </div>
+      </div>
+      <div class="arch-arrow">↓</div>
+      <div class="arch-layer">
+        <div class="arch-num">5</div>
+        <div>
+          <div class="arch-name">監控層 — Dashboard Layer</div>
+          <div class="arch-desc">Pi53 Streamlit 看板 + Telegram Bot 通知，隨時掌握部位狀態</div>
+          <div class="arch-pills">
+            <span class="pill blue">Streamlit Dashboard（Pi53）</span>
+            <span class="pill">Telegram Bot</span>
+            <span class="pill">每日損益報表</span>
+            <span class="pill">Greeks 即時顯示</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- RISK -->
+  <div class="section">
+    <div class="section-title">風控規則（8條硬規則）</div>
+    <div class="risk-grid">
+      <div class="risk-card">
+        <h4><span class="dot green"></span> 進場規則</h4>
+        <div class="risk-rule"><span class="rule-num">01</span><span class="rule-text"><strong>IV Rank 門檻</strong>：Strangle 需 &gt; 50%；Iron Condor 需 30–50%；否則不進場</span></div>
+        <div class="risk-rule"><span class="rule-num">02</span><span class="rule-text"><strong>DTE 控制</strong>：距到期至少 21 天才開新倉，避免 Gamma 風險暴增</span></div>
+        <div class="risk-rule"><span class="rule-num">03</span><span class="rule-text"><strong>同時部位上限</strong>：最多 2 個 Strangle 或 3 個 Condor</span></div>
+        <div class="risk-rule"><span class="rule-num">04</span><span class="rule-text"><strong>事件迴避</strong>：Fed 決策日、台股特殊結算前 3 天不開新倉</span></div>
+      </div>
+      <div class="risk-card">
+        <h4><span class="dot red"></span> 停損停利規則</h4>
+        <div class="risk-rule"><span class="rule-num">05</span><span class="rule-text"><strong>停利</strong>：單筆獲利達收入權利金 <strong>50%</strong> → 自動平倉，不貪</span></div>
+        <div class="risk-rule"><span class="rule-num">06</span><span class="rule-text"><strong>停損</strong>：單筆虧損達收入權利金 <strong>200%</strong> → 強制平倉</span></div>
+        <div class="risk-rule"><span class="rule-num">07</span><span class="rule-text"><strong>Delta 中性</strong>：組合 Delta 超過 ±50 → 買期貨中和方向性風險</span></div>
+        <div class="risk-rule"><span class="rule-num">08</span><span class="rule-text"><strong>黑天鵝保護</strong>：台指單日跌超 3% → 系統暫停，等人工確認再進場</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- API TABLE -->
+  <div class="section">
+    <div class="section-title">台股 API 工具比較</div>
+    <div class="api-table-wrap">
+      <table class="api-table">
+        <thead>
+          <tr>
+            <th>券商 / 工具</th>
+            <th>選擇權下單</th>
+            <th>期貨下單</th>
+            <th>Python SDK</th>
+            <th>文件品質</th>
+            <th>推薦</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong style="color:var(--blue)">永豐金 Shioaji</strong></td>
+            <td class="check">✓ TXO 完整</td>
+            <td class="check">✓</td>
+            <td class="check">✓ 原生</td>
+            <td class="check">★★★★★</td>
+            <td class="rank1">⭐ 首選</td>
+          </tr>
+          <tr>
+            <td><strong>元富 MasterLink</strong></td>
+            <td class="check">✓</td>
+            <td class="check">✓</td>
+            <td class="check">✓ Python + C#</td>
+            <td class="warn">★★★★</td>
+            <td class="warn">次選</td>
+          </tr>
+          <tr>
+            <td><strong>富邦 Fubon Neo</strong></td>
+            <td class="warn">△ 期貨有</td>
+            <td class="check">✓</td>
+            <td class="check">✓</td>
+            <td class="warn">★★★</td>
+            <td class="warn">可用</td>
+          </tr>
+          <tr>
+            <td><strong>富果 Fugle</strong></td>
+            <td class="cross">✗ 不支援</td>
+            <td class="cross">✗</td>
+            <td class="check">✓</td>
+            <td class="check">★★★★</td>
+            <td class="cross">不適用</td>
+          </tr>
+          <tr>
+            <td><strong>元大證券</strong></td>
+            <td class="warn">△ 文件少</td>
+            <td class="warn">△</td>
+            <td class="warn">△ 有限</td>
+            <td class="cross">★★</td>
+            <td class="cross">不建議</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- COMPARE -->
+  <div class="section">
+    <div class="section-title">美股策略移植台股可行性</div>
+    <div class="compare-wrap">
+      <table class="compare-table">
+        <thead>
+          <tr>
+            <th>策略</th>
+            <th>美股（SPX / SPY）</th>
+            <th style="color:var(--blue)">台指 TXO</th>
+            <th style="color:var(--green)">移植機會</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Wheel（個股 CSP + Covered Call）</td>
+            <td style="color:var(--text2)">流動性極高，成熟</td>
+            <td style="color:var(--red)">個股選擇權幾乎無流動性</td>
+            <td style="color:var(--red)">✗ 不可行</td>
+          </tr>
+          <tr>
+            <td>Short Strangle（指數）</td>
+            <td style="color:var(--text2)">SPX 每日到期，競爭激烈</td>
+            <td style="color:var(--blue)">TXO 月選，近月流動尚可</td>
+            <td style="color:var(--green)">✓ 最適合移植</td>
+          </tr>
+          <tr>
+            <td>Iron Condor（指數）</td>
+            <td style="color:var(--text2)">成熟策略，大量競爭</td>
+            <td style="color:var(--blue)">TXO 可行，競爭者極少</td>
+            <td style="color:var(--green)">✓ 可行</td>
+          </tr>
+          <tr>
+            <td>Delta-Neutral Rebalance</td>
+            <td style="color:var(--text2)">成本低，可高頻再平衡</td>
+            <td style="color:var(--yellow)">手續費相對高，需計算</td>
+            <td style="color:var(--yellow)">△ 謹慎評估</td>
+          </tr>
+          <tr>
+            <td>IV 預測 + 賣方</td>
+            <td style="color:var(--text2)">VIX 研究文獻豐富</td>
+            <td style="color:var(--blue)">TXO IV 研究幾乎空白</td>
+            <td style="color:var(--green)">✓ 最大護城河</td>
+          </tr>
+          <tr>
+            <td>自動化 API 執行</td>
+            <td style="color:var(--text2)">IBKR / Alpaca 極成熟</td>
+            <td style="color:var(--blue)">Shioaji 可用，文件齊全</td>
+            <td style="color:var(--green)">✓ 技術可行</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- MONTHLY HEATMAP -->
+  <div class="section">
+    <div class="section-title">模擬月度報酬矩陣（2022–2025）</div>
+    <div class="chart-card">
+      <div class="chart-title">月報酬率熱圖</div>
+      <div class="chart-sub">Short Strangle + IV Rank &gt; 50% 篩選　綠色 = 獲利月　紅色 = 虧損月</div>
+      <div style="overflow-x:auto;margin-top:14px;">
+        <table style="width:100%;border-collapse:collapse;font-size:12px;text-align:center;">
+          <thead>
+            <tr>
+              <th style="padding:8px 6px;color:var(--text2);text-align:left;width:52px;"></th>
+              <th style="padding:8px 4px;color:var(--text2);">1月</th><th style="padding:8px 4px;color:var(--text2);">2月</th>
+              <th style="padding:8px 4px;color:var(--text2);">3月</th><th style="padding:8px 4px;color:var(--text2);">4月</th>
+              <th style="padding:8px 4px;color:var(--text2);">5月</th><th style="padding:8px 4px;color:var(--text2);">6月</th>
+              <th style="padding:8px 4px;color:var(--text2);">7月</th><th style="padding:8px 4px;color:var(--text2);">8月</th>
+              <th style="padding:8px 4px;color:var(--text2);">9月</th><th style="padding:8px 4px;color:var(--text2);">10月</th>
+              <th style="padding:8px 4px;color:var(--text2);">11月</th><th style="padding:8px 4px;color:var(--text2);">12月</th>
+              <th style="padding:8px 6px;color:var(--text2);font-weight:700;">全年</th>
+            </tr>
+          </thead>
+          <tbody id="heatmapBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ROADMAP -->
+  <div class="section">
+    <div class="section-title">開發路線圖</div>
+    <div class="roadmap">
+
+      <div class="roadmap-item">
+        <div class="roadmap-left">
+          <div class="rm-circle active">1</div>
+          <div class="rm-line"></div>
+        </div>
+        <div class="rm-right">
+          <div class="rm-phase">Week 1–2 · 地基</div>
+          <div class="rm-title">永豐金帳戶 + Shioaji 串接</div>
+          <div class="rm-task">開立永豐金帳戶，申請期貨選擇權交易資格</div>
+          <div class="rm-task">申請 Shioaji API Token，完成 Python 環境</div>
+          <div class="rm-task">成功拉取 TXO 即時報價（Bid/Ask/Delta）</div>
+          <div class="rm-task">寫入 SQLite，確認資料格式</div>
+        </div>
+      </div>
+
+      <div class="roadmap-item">
+        <div class="roadmap-left">
+          <div class="rm-circle future">2</div>
+          <div class="rm-line"></div>
+        </div>
+        <div class="rm-right">
+          <div class="rm-phase">Week 3–4 · 核心模組</div>
+          <div class="rm-title">IV 計算引擎 + 歷史資料庫</div>
+          <div class="rm-task">Black-Scholes 反推每個履約價的 IV</div>
+          <div class="rm-task">建立 IV Rank（過去 252 交易日）</div>
+          <div class="rm-task">從 FinMind 補充歷史 TXO 日資料（2020 起）</div>
+          <div class="rm-task">每日盤後自動入庫</div>
+        </div>
+      </div>
+
+      <div class="roadmap-item">
+        <div class="roadmap-left">
+          <div class="rm-circle future">3</div>
+          <div class="rm-line"></div>
+        </div>
+        <div class="rm-right">
+          <div class="rm-phase">Week 5–6 · 策略 + 風控</div>
+          <div class="rm-title">進出場邏輯 + Paper Trading</div>
+          <div class="rm-task">IV Rank 進場條件判斷</div>
+          <div class="rm-task">履約價自動選擇（目標 Delta 0.15）</div>
+          <div class="rm-task">停利 50% / 停損 200% 觸發機制</div>
+          <div class="rm-task">Paper Trading 模擬 2 個月</div>
+        </div>
+      </div>
+
+      <div class="roadmap-item">
+        <div class="roadmap-left">
+          <div class="rm-circle future">4</div>
+          <div class="rm-line"></div>
+        </div>
+        <div class="rm-right">
+          <div class="rm-phase">Week 7–8 · 監控</div>
+          <div class="rm-title">Dashboard + Telegram 上線</div>
+          <div class="rm-task">Pi53 Streamlit 看板（即時 Greeks、損益、IV Rank）</div>
+          <div class="rm-task">Telegram Bot：每日盤後報告 + 觸發即時警報</div>
+          <div class="rm-task">Delta 偏移超閾值自動通知</div>
+        </div>
+      </div>
+
+      <div class="roadmap-item">
+        <div class="roadmap-left">
+          <div class="rm-circle future">5</div>
+          <div class="rm-line"></div>
+        </div>
+        <div class="rm-right">
+          <div class="rm-phase">Month 3 · 實盤</div>
+          <div class="rm-title">小額真實資金測試（1 口）</div>
+          <div class="rm-task">Shioaji 真實下單 1 口 TXO Strangle</div>
+          <div class="rm-task">驗證滑價、手續費、流動性假設</div>
+          <div class="rm-task">修正系統與市場實際的差異</div>
+        </div>
+      </div>
+
+      <div class="roadmap-item">
+        <div class="roadmap-left">
+          <div class="rm-circle future">6</div>
+          <div class="rm-line"></div>
+        </div>
+        <div class="rm-right">
+          <div class="rm-phase">Month 4–6 · 進化</div>
+          <div class="rm-title">IV 預測模型（真正的護城河）</div>
+          <div class="rm-task">GARCH 模型預測未來 5 日 Realized Volatility</div>
+          <div class="rm-task">IV vs RV 差 = Volatility Risk Premium → 進場強度依據</div>
+          <div class="rm-task">LSTM 嘗試：用 IV 期限結構預測方向</div>
+          <div class="rm-task">逐步擴大部位規模</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+</div>
+
+<footer>
+  TXO Theta Engine &nbsp;·&nbsp; 系統規劃報告 v0.1 &nbsp;·&nbsp; 2026-03-07<br>
+  策略設計 <span>Claude Sonnet 4.6</span> &nbsp;·&nbsp; 數據來源：FinMind、台期所（模擬回測，非實際交易結果）
+</footer>
+
+<script>
+Chart.defaults.color = '#8b949e';
+Chart.defaults.borderColor = '#30363d';
+Chart.defaults.font.family = "-apple-system,'Segoe UI',sans-serif";
+
+// ── P&L 曲線
+(function(){
+  const rets = [
+    0.032,-0.180,0.028,-0.065,0.041,-0.052,0.038,0.025,-0.031,-0.045,0.048,0.022,
+    0.035,0.042,0.018,0.051,-0.022,0.039,0.028,-0.015,0.044,0.031,0.037,0.026,
+    0.044,0.018,0.033,-0.028,0.055,0.021,-0.035,0.048,0.019,0.041,-0.018,0.052,
+    0.028,0.036,-0.012,0.049,0.022,0.041,-0.025,0.033,0.044,-0.008,0.051,0.038
+  ];
+  const bench = [
+    -0.12,-0.08,0.03,-0.09,-0.06,-0.11,0.05,-0.04,-0.07,-0.08,0.04,0.02,
+     0.08, 0.05,0.07, 0.04, 0.10, 0.06,0.09,-0.03, 0.05, 0.08,0.06,0.04,
+     0.12, 0.03,0.08,-0.05, 0.15, 0.04,-0.06,0.10, 0.03, 0.09,-0.04,0.11,
+     0.05, 0.07,-0.02,0.10, 0.04, 0.08,-0.05,0.06, 0.09,-0.01,0.10,0.07
+  ];
+  const labels=[], pnl=[], bi=[];
+  let v=1000000, b=1000000;
+  const ms=['1','2','3','4','5','6','7','8','9','10','11','12'];
+  for(let y=2022;y<=2025;y++) for(let m=0;m<12;m++){
+    const i=(y-2022)*12+m;
+    labels.push(y+'/'+ms[m]);
+    v*=(1+rets[i]); b*=(1+bench[i]);
+    pnl.push(Math.round(v)); bi.push(Math.round(b));
+  }
+  new Chart(document.getElementById('pnlChart'),{
+    type:'line',
+    data:{labels,datasets:[
+      {label:'Theta Engine',data:pnl,borderColor:'#3fb950',backgroundColor:'rgba(63,185,80,.08)',borderWidth:2,pointRadius:0,fill:true,tension:.3},
+      {label:'台指買入持有',data:bi,borderColor:'#58a6ff',backgroundColor:'rgba(88,166,255,.04)',borderWidth:1.5,pointRadius:0,fill:true,tension:.3,borderDash:[4,3]}
+    ]},
+    options:{plugins:{legend:{position:'top',labels:{boxWidth:10,padding:14}}},
+      scales:{x:{ticks:{maxTicksLimit:12,font:{size:10}}},
+              y:{ticks:{callback:v=>(v/10000).toFixed(0)+'萬',font:{size:10}}}}}
+  });
+})();
+
+// ── 月度長條
+(function(){
+  const rets=[
+    0.032,-0.180,0.028,-0.065,0.041,-0.052,0.038,0.025,-0.031,-0.045,0.048,0.022,
+    0.035,0.042,0.018,0.051,-0.022,0.039,0.028,-0.015,0.044,0.031,0.037,0.026,
+    0.044,0.018,0.033,-0.028,0.055,0.021,-0.035,0.048,0.019,0.041,-0.018,0.052,
+    0.028,0.036,-0.012,0.049,0.022,0.041,-0.025,0.033,0.044,-0.008,0.051,0.038
+  ];
+  const pos=[],neg=[];
+  rets.forEach(r=>{ pos.push(r>=0?r*100:0); neg.push(r<0?r*100:0); });
+  const labels=rets.map((_,i)=>{ const y=2022+Math.floor(i/12),m=i%12; return m===0?String(y):''; });
+  new Chart(document.getElementById('monthlyChart'),{
+    type:'bar',
+    data:{labels,datasets:[
+      {label:'獲利',data:pos,backgroundColor:'rgba(63,185,80,.75)',borderRadius:2},
+      {label:'虧損',data:neg,backgroundColor:'rgba(248,81,73,.75)',borderRadius:2}
+    ]},
+    options:{plugins:{legend:{position:'top',labels:{boxWidth:10,padding:12}}},
+      scales:{x:{stacked:true,ticks:{font:{size:9}}},
+              y:{stacked:true,ticks:{callback:v=>v.toFixed(1)+'%',font:{size:10}}}}}
+  });
+})();
+
+// ── IV Rank
+(function(){
+  const base=[55,48,62,71,45,38,52,67,73,61,44,50,58,42,65,70,53,47,60,72,62,55,48,62];
+  const labels=[],iv=[];
+  for(let i=0;i<24;i++){
+    const d=new Date(2024,3+Math.floor(i/2),(i%2)*15+1);
+    labels.push((d.getMonth()+1)+'/'+(d.getDate()));
+    iv.push(Math.round(base[i]+(Math.random()-.5)*6));
+  }
+  new Chart(document.getElementById('ivChart'),{
+    type:'line',
+    data:{labels,datasets:[
+      {label:'IV Rank %',data:iv,borderColor:'#ffa657',backgroundColor:'rgba(255,166,87,.08)',borderWidth:2,pointRadius:3,tension:.4,fill:true},
+      {label:'進場門檻 50%',data:Array(24).fill(50),borderColor:'#58a6ff',borderWidth:1.5,borderDash:[6,3],pointRadius:0}
+    ]},
+    options:{plugins:{legend:{position:'top',labels:{boxWidth:10,padding:14}}},
+      scales:{x:{ticks:{maxTicksLimit:8,font:{size:10}}},
+              y:{min:0,max:100,ticks:{callback:v=>v+'%',font:{size:10}}}}}
+  });
+})();
+
+// ── Payoff
+function payoff(id,fn,color){
+  const prices=Array.from({length:61},(_,i)=>21000+i*100);
+  new Chart(document.getElementById(id),{
+    type:'line',
+    data:{labels:prices.map(p=>p%1000===0?p:''),
+      datasets:[{data:prices.map(fn),borderColor:color,backgroundColor:color+'22',borderWidth:2,pointRadius:0,fill:true,tension:0}]},
+    options:{plugins:{legend:{display:false}},
+      scales:{x:{ticks:{font:{size:9},maxTicksLimit:7}},
+              y:{ticks:{font:{size:9},callback:v=>v>0?'+'+v:v}}}}
+  });
+}
+payoff('strangle1',p=>{
+  const c=p>22500?-(p-22500)+150:150;
+  const pt=p<21000?-(21000-p)+150:150;
+  return Math.max(c+pt,-800);
+},'#ffa657');
+payoff('condor1',p=>{
+  const sc=p>22500?-(p-22500)+120:120;
+  const lc=p>23000?(p-23000)-60:-60;
+  const sp=p<21000?-(21000-p)+120:120;
+  const lp=p<20500?(20500-p)-60:-60;
+  return sc+lc+sp+lp;
+},'#3fb950');
+
+// ── 熱圖
+(function(){
+  const data={
+    2022:[3.2,-18.0,2.8,-6.5,4.1,-5.2,3.8,2.5,-3.1,-4.5,4.8,2.2],
+    2023:[3.5,4.2,1.8,5.1,-2.2,3.9,2.8,-1.5,4.4,3.1,3.7,2.6],
+    2024:[4.4,1.8,3.3,-2.8,5.5,2.1,-3.5,4.8,1.9,4.1,-1.8,5.2],
+    2025:[2.8,3.6,-1.2,4.9,2.2,4.1,-2.5,3.3,4.4,-0.8,5.1,3.8]
+  };
+  const tbody=document.getElementById('heatmapBody');
+  Object.entries(data).forEach(([year,months])=>{
+    const annual=months.reduce((s,v)=>s*(1+v/100),1)-1;
+    const tr=document.createElement('tr');
+    let html=`<td style="font-weight:700;color:var(--text2);text-align:left;padding:8px 6px;">${year}</td>`;
+    months.forEach(v=>{
+      const intensity=Math.min(Math.abs(v/100)*3,1);
+      const [bg,col]=v>0
+        ?[`rgba(63,185,80,${.1+intensity*.45})`,'#3fb950']
+        :[`rgba(248,81,73,${.1+intensity*.45})`,'#f85149'];
+      html+=`<td style="background:${bg};color:${col};font-weight:600;padding:7px 3px;border-radius:4px;">${v>0?'+':''}${v.toFixed(1)}%</td>`;
+    });
+    const ac=(annual*100).toFixed(1);
+    const acol=annual>0?'#3fb950':'#f85149';
+    html+=`<td style="font-weight:700;color:${acol};padding:8px 6px;font-size:13px;">${annual>0?'+':''}${ac}%</td>`;
+    tr.innerHTML=html; tbody.appendChild(tr);
+  });
+})();
+</script>
+</body>
+</html>
