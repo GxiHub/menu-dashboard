@@ -89,8 +89,10 @@ check_docker() {
 }
 
 # ── 執行檢查 ──────────────────────────────────────────────────
-check_http   "PROD"     "http://127.0.0.1:8501" "prod_http"
-check_http   "Staging"  "http://127.0.0.1:8502" "staging_http"
-check_http   "PiUpload" "http://127.0.0.1:8052" "piupload_http"
-check_docker "menu-dashboard"
-check_docker "zip-deploy-watcher"
+check_http   "Dashboard-v2" "http://127.0.0.1:5010" "v2_http"
+check_http   "PiUpload"     "http://127.0.0.1:8052" "piupload_http"
+check_http   "Accounting"   "http://127.0.0.1:5002" "accounting_http"
+check_http   "FB-Scraper"   "http://127.0.0.1:5005" "scraper_http"
+check_docker "cloudflared"
+check_docker "piupload"
+check_docker "luwei-accounting"
