@@ -107,7 +107,7 @@
 <!-- Summary stats -->
 <div class="sm-summary">
   <div class="sm-stat sm-stat-hw"><div class="sm-stat-num">6</div><div class="sm-stat-label">硬體項目</div></div>
-  <div class="sm-stat sm-stat-sw"><div class="sm-stat-num">7</div><div class="sm-stat-label">軟體模組</div></div>
+  <div class="sm-stat sm-stat-sw"><div class="sm-stat-num">9</div><div class="sm-stat-label">軟體模組</div></div>
   <div class="sm-stat sm-stat-flow"><div class="sm-stat-num">5</div><div class="sm-stat-label">營運流程</div></div>
   <div class="sm-stat sm-stat-sop"><div class="sm-stat-num">5</div><div class="sm-stat-label">SOP 文件</div></div>
   <div class="sm-stat sm-stat-biz"><div class="sm-stat-num">5</div><div class="sm-stat-label">商業模組</div></div>
@@ -247,7 +247,7 @@
   <div class="sm-sec-head">
     <span class="sm-sec-icon">💻</span>
     <span class="sm-sec-title">軟體 Software</span>
-    <span class="sm-sec-count">7 項</span>
+    <span class="sm-sec-count">9 項</span>
   </div>
   <div class="sm-grid" style="grid-template-columns:1fr;">
     <div class="sm-item">
@@ -333,6 +333,31 @@
           <span class="sm-tag sm-tag-sw">CRM</span>
           <span class="sm-tag sm-tag-sw">計時系統</span>
           <span class="sm-tag sm-tag-flow">數據回流</span>
+        </div>
+      </div>
+    </div>
+    <div class="sm-item done">
+      <div class="sm-chk"></div>
+      <div class="sm-body">
+        <div class="sm-name">系統監控儀表板 ✅</div>
+        <div class="sm-desc">25項健康檢查，含頁面/API/DB完整性，每5分鐘自動執行，支援手動觸發</div>
+        <div class="sm-tags">
+          <span class="sm-tag sm-tag-sw">全系統</span>
+          <span class="sm-tag sm-tag-sw">POS 系統</span>
+          <span class="sm-tag sm-tag-sw">KDS 派單</span>
+          <span class="sm-tag sm-tag-flow">數據回流</span>
+        </div>
+      </div>
+    </div>
+    <div class="sm-item done">
+      <div class="sm-chk"></div>
+      <div class="sm-body">
+        <div class="sm-name">訂單三層備份系統 ✅</div>
+        <div class="sm-desc">JSONL即時備份（每筆）+ SQLite快照（每10分鐘）+ rsync異機備份（pi52），防SD卡故障</div>
+        <div class="sm-tags">
+          <span class="sm-tag sm-tag-sw">POS 系統</span>
+          <span class="sm-tag sm-tag-hw">網路基礎設施</span>
+          <span class="sm-tag sm-tag-sw">全系統</span>
         </div>
       </div>
     </div>
