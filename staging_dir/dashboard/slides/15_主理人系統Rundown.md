@@ -1,397 +1,557 @@
 <style>
-.rd{font-family:inherit;color:var(--text);}
+.sm{font-family:inherit;color:var(--text);}
 
-/* Phase bar */
-.rd-phases{display:grid;grid-template-columns:1fr 1fr 1fr;gap:0;border-radius:10px;overflow:hidden;margin-bottom:20px;border:1px solid var(--border);}
-.rd-phase{padding:14px 18px;display:flex;flex-direction:column;gap:3px;}
-.rd-phase-p1{background:rgba(59,130,246,.12);border-right:1px solid var(--border);}
-.rd-phase-p2{background:rgba(234,179,8,.10);border-right:1px solid var(--border);}
-.rd-phase-p3{background:rgba(34,197,94,.10);}
-.rd-phase-label{font-size:10px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;}
-.rd-phase-p1 .rd-phase-label{color:var(--blue);}
-.rd-phase-p2 .rd-phase-label{color:var(--yellow);}
-.rd-phase-p3 .rd-phase-label{color:var(--green);}
-.rd-phase-title{font-size:13px;font-weight:700;}
-.rd-phase-sub{font-size:11px;color:var(--dim);}
-.rd-phase-bar{height:3px;border-radius:2px;margin-top:6px;}
-.rd-phase-p1 .rd-phase-bar{background:var(--blue);}
-.rd-phase-p2 .rd-phase-bar{background:var(--yellow);}
-.rd-phase-p3 .rd-phase-bar{background:var(--green);}
+/* Section header */
+.sm-sec{margin-bottom:16px;}
+.sm-sec-head{display:flex;align-items:center;gap:8px;margin-bottom:10px;padding:8px 14px;border-radius:8px;cursor:default;}
+.sm-sec-icon{font-size:16px;}
+.sm-sec-title{font-size:13px;font-weight:700;letter-spacing:.3px;}
+.sm-sec-count{font-size:10px;padding:2px 8px;border-radius:10px;font-weight:600;margin-left:auto;}
 
-/* Swimlane */
-.rd-swim{display:grid;grid-template-columns:96px 1fr 1fr 1fr;gap:0;border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-bottom:20px;}
-.rd-swim-head{background:var(--bg-hover);padding:8px 12px;font-size:10px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;color:var(--dim);border-bottom:1px solid var(--border);display:flex;align-items:center;}
-.rd-swim-head.c1{border-right:1px solid var(--border);}
-.rd-swim-head.c2{border-right:1px solid var(--border);color:var(--blue);}
-.rd-swim-head.c3{border-right:1px solid var(--border);color:var(--yellow);}
-.rd-swim-head.c4{color:var(--green);}
-.rd-swim-role{background:var(--bg-card);padding:12px 10px;border-right:1px solid var(--border);border-bottom:1px solid var(--border);display:flex;flex-direction:column;align-items:center;justify-content:flex-start;gap:4px;padding-top:14px;}
-.rd-swim-role:last-of-type{border-bottom:none;}
-.rd-swim-emoji{font-size:18px;}
-.rd-swim-role-name{font-size:10px;font-weight:600;color:var(--dim);text-align:center;line-height:1.3;}
-.rd-swim-cell{padding:10px;border-bottom:1px solid var(--border);border-right:1px solid var(--border);vertical-align:top;background:var(--bg);}
-.rd-swim-cell.last-col{border-right:none;}
-.rd-swim-cell.last-row{border-bottom:none;}
-.rd-swim-cell.last-row.last-col{border-right:none;border-bottom:none;}
+.sm-hw .sm-sec-head{background:rgba(59,130,246,.10);border:1px solid rgba(59,130,246,.25);}
+.sm-hw .sm-sec-title{color:var(--blue);}
+.sm-hw .sm-sec-count{background:rgba(59,130,246,.15);color:var(--blue);}
 
-/* Task cards */
-.rd-task{background:var(--bg-card);border:1px solid var(--border);border-radius:7px;padding:8px 10px;margin-bottom:6px;}
-.rd-task:last-child{margin-bottom:0;}
-.rd-task-name{font-size:12px;font-weight:600;margin-bottom:4px;line-height:1.4;}
-.rd-task-meta{display:flex;flex-wrap:wrap;gap:4px;align-items:center;}
-.rd-dur{font-size:10px;padding:2px 7px;border-radius:4px;background:var(--bg-hover);color:var(--dim);font-weight:500;}
-.risk-r{display:inline-block;width:7px;height:7px;border-radius:50%;background:#ef4444;flex-shrink:0;}
-.risk-y{display:inline-block;width:7px;height:7px;border-radius:50%;background:#eab308;flex-shrink:0;}
-.risk-g{display:inline-block;width:7px;height:7px;border-radius:50%;background:#22c55e;flex-shrink:0;}
-.rd-task-p1{border-left:3px solid var(--blue);}
-.rd-task-p2{border-left:3px solid var(--yellow);}
-.rd-task-p3{border-left:3px solid var(--green);}
+.sm-sw .sm-sec-head{background:rgba(168,85,247,.10);border:1px solid rgba(168,85,247,.25);}
+.sm-sw .sm-sec-title{color:#a855f7;}
+.sm-sw .sm-sec-count{background:rgba(168,85,247,.15);color:#a855f7;}
 
-/* Decision points */
-.rd-decisions{margin-bottom:20px;}
-.rd-decisions-title{font-size:11px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;color:var(--dim);margin-bottom:10px;}
-.rd-dec-row{display:flex;align-items:stretch;gap:0;overflow-x:auto;padding-bottom:4px;}
-.rd-dec-item{display:flex;flex-direction:column;align-items:center;min-width:130px;flex:1;}
-.rd-dec-dot{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;z-index:1;flex-shrink:0;}
-.rd-dec-dot-blue{background:rgba(59,130,246,.2);border:2px solid var(--blue);color:var(--blue);}
-.rd-dec-dot-yellow{background:rgba(234,179,8,.2);border:2px solid var(--yellow);color:var(--yellow);}
-.rd-dec-dot-green{background:rgba(34,197,94,.2);border:2px solid var(--green);color:var(--green);}
-.rd-dec-line{flex:1;height:2px;background:var(--border);margin:13px -1px 0;z-index:0;}
-.rd-dec-label{font-size:11px;font-weight:600;margin-top:6px;text-align:center;}
-.rd-dec-sub{font-size:10px;color:var(--dim);text-align:center;line-height:1.4;margin-top:2px;}
-.rd-dec-badge{font-size:9px;padding:2px 7px;border-radius:4px;margin-top:4px;font-weight:700;}
-.rd-dec-badge-go{background:rgba(34,197,94,.15);color:var(--green);}
-.rd-dec-badge-check{background:rgba(234,179,8,.15);color:var(--yellow);}
+.sm-flow .sm-sec-head{background:rgba(34,197,94,.10);border:1px solid rgba(34,197,94,.25);}
+.sm-flow .sm-sec-title{color:var(--green);}
+.sm-flow .sm-sec-count{background:rgba(34,197,94,.15);color:var(--green);}
 
-/* Risk register */
-.rd-risks{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:20px;}
-.rd-risk-card{background:var(--bg-card);border:1px solid var(--border);border-radius:8px;padding:12px 14px;}
-.rd-risk-header{display:flex;align-items:center;gap:8px;margin-bottom:6px;}
-.rd-risk-sev{font-size:10px;font-weight:700;padding:2px 8px;border-radius:4px;}
-.rd-risk-sev-h{background:rgba(239,68,68,.15);color:#ef4444;}
-.rd-risk-sev-m{background:rgba(234,179,8,.15);color:var(--yellow);}
-.rd-risk-sev-l{background:rgba(34,197,94,.15);color:var(--green);}
-.rd-risk-name{font-size:12px;font-weight:600;}
-.rd-risk-desc{font-size:11px;color:var(--muted);margin-bottom:6px;line-height:1.5;}
-.rd-risk-mit{font-size:10px;color:var(--dim);display:flex;align-items:flex-start;gap:5px;}
-.rd-risk-mit::before{content:"→";color:var(--blue);flex-shrink:0;}
+.sm-sop .sm-sec-head{background:rgba(234,179,8,.10);border:1px solid rgba(234,179,8,.25);}
+.sm-sop .sm-sec-title{color:var(--yellow);}
+.sm-sop .sm-sec-count{background:rgba(234,179,8,.15);color:var(--yellow);}
 
-.rd-section-title{font-size:11px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;color:var(--dim);margin-bottom:10px;display:flex;align-items:center;gap:6px;}
-.rd-section-title::before{content:"";display:inline-block;width:3px;height:12px;border-radius:2px;background:var(--blue);}
+.sm-biz .sm-sec-head{background:rgba(249,115,22,.10);border:1px solid rgba(249,115,22,.25);}
+.sm-biz .sm-sec-title{color:#f97316;}
+.sm-biz .sm-sec-count{background:rgba(249,115,22,.15);color:#f97316;}
+
+/* Items grid */
+.sm-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+
+/* Item card */
+.sm-item{background:var(--bg-card);border:1px solid var(--border);border-radius:8px;padding:10px 12px;display:flex;align-items:flex-start;gap:10px;transition:border-color .15s;}
+
+/* Checkbox */
+.sm-chk{width:18px;height:18px;border-radius:5px;border:2px solid var(--border);flex-shrink:0;margin-top:1px;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all .15s;}
+.sm-item.done .sm-chk{background:var(--green);border-color:var(--green);}
+.sm-item.done .sm-chk::after{content:"✓";color:#fff;font-size:11px;font-weight:800;}
+.sm-item.done{border-color:rgba(34,197,94,.3);opacity:.7;}
+.sm-item.done .sm-name{text-decoration:line-through;color:var(--dim);}
+
+/* Item content */
+.sm-body{flex:1;min-width:0;}
+.sm-name{font-size:12px;font-weight:600;line-height:1.4;margin-bottom:4px;}
+.sm-desc{font-size:10px;color:var(--dim);line-height:1.4;margin-bottom:6px;}
+.sm-tags{display:flex;flex-wrap:wrap;gap:4px;}
+
+/* Relation tags */
+.sm-tag{font-size:9px;padding:2px 7px;border-radius:4px;font-weight:600;white-space:nowrap;}
+.sm-tag-hw{background:rgba(59,130,246,.12);color:var(--blue);}
+.sm-tag-sw{background:rgba(168,85,247,.12);color:#a855f7;}
+.sm-tag-flow{background:rgba(34,197,94,.12);color:var(--green);}
+.sm-tag-sop{background:rgba(234,179,8,.12);color:var(--yellow);}
+.sm-tag-biz{background:rgba(249,115,22,.12);color:#f97316;}
+
+/* Flow diagram */
+.sm-pipe{display:flex;align-items:center;gap:0;margin-bottom:20px;padding:14px 16px;background:var(--bg-card);border:1px solid var(--border);border-radius:10px;overflow-x:auto;}
+.sm-pipe-step{display:flex;flex-direction:column;align-items:center;min-width:90px;flex:1;}
+.sm-pipe-icon{font-size:22px;margin-bottom:4px;}
+.sm-pipe-label{font-size:11px;font-weight:700;text-align:center;}
+.sm-pipe-sub{font-size:9px;color:var(--dim);text-align:center;margin-top:2px;}
+.sm-pipe-arrow{font-size:16px;color:var(--dim);flex-shrink:0;margin:0 2px;}
+
+/* Legend */
+.sm-legend{display:flex;flex-wrap:wrap;gap:12px;margin-bottom:16px;padding:8px 14px;background:var(--bg-card);border:1px solid var(--border);border-radius:8px;font-size:10px;color:var(--dim);}
+.sm-legend-item{display:flex;align-items:center;gap:5px;}
+.sm-legend-dot{width:10px;height:10px;border-radius:3px;flex-shrink:0;}
+.sm-legend-dot.hw{background:rgba(59,130,246,.5);}
+.sm-legend-dot.sw{background:rgba(168,85,247,.5);}
+.sm-legend-dot.flow{background:rgba(34,197,94,.5);}
+.sm-legend-dot.sop{background:rgba(234,179,8,.5);}
+.sm-legend-dot.biz{background:rgba(249,115,22,.5);}
+
+/* Summary bar */
+.sm-summary{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-bottom:20px;}
+.sm-stat{text-align:center;padding:10px 8px;border-radius:8px;border:1px solid var(--border);background:var(--bg-card);}
+.sm-stat-num{font-size:20px;font-weight:800;line-height:1;}
+.sm-stat-label{font-size:9px;color:var(--dim);margin-top:4px;font-weight:600;letter-spacing:.3px;}
+.sm-stat-hw .sm-stat-num{color:var(--blue);}
+.sm-stat-sw .sm-stat-num{color:#a855f7;}
+.sm-stat-flow .sm-stat-num{color:var(--green);}
+.sm-stat-sop .sm-stat-num{color:var(--yellow);}
+.sm-stat-biz .sm-stat-num{color:#f97316;}
+
+/* Two-column layout */
+.sm-cols{display:grid;grid-template-columns:1fr 1fr;gap:20px;}
 
 @media(max-width:768px){
-  .rd-phases{grid-template-columns:1fr;}
-  .rd-swim{grid-template-columns:72px 1fr;}
-  .rd-risks{grid-template-columns:1fr;}
-  .rd-dec-item{min-width:100px;}
+  .sm-grid{grid-template-columns:1fr;}
+  .sm-cols{grid-template-columns:1fr;}
+  .sm-summary{grid-template-columns:repeat(3,1fr);}
+  .sm-pipe-step{min-width:70px;}
 }
 </style>
 
-<div class="rd">
+<div class="sm">
 
-<!-- Phase bar -->
-<div class="rd-phases">
-  <div class="rd-phase rd-phase-p1">
-    <div class="rd-phase-label">Phase 1 · 0 – 6 月</div>
-    <div class="rd-phase-title">單店驗證</div>
-    <div class="rd-phase-sub">跑通流程、確認損益</div>
-    <div class="rd-phase-bar"></div>
+<!-- Title -->
+<div style="text-align:center;margin-bottom:20px;">
+  <div style="font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--dim);margin-bottom:4px;">SYSTEM MAP</div>
+  <div style="font-size:18px;font-weight:800;">主理人效率餐飲系統 · 全局建置確認</div>
+  <div style="font-size:11px;color:var(--dim);margin-top:4px;">軟體 × 硬體 × 流程 × SOP × 商業｜關聯追蹤 + 完成度確認</div>
+</div>
+
+<!-- Summary stats -->
+<div class="sm-summary">
+  <div class="sm-stat sm-stat-hw"><div class="sm-stat-num">6</div><div class="sm-stat-label">硬體項目</div></div>
+  <div class="sm-stat sm-stat-sw"><div class="sm-stat-num">7</div><div class="sm-stat-label">軟體模組</div></div>
+  <div class="sm-stat sm-stat-flow"><div class="sm-stat-num">5</div><div class="sm-stat-label">營運流程</div></div>
+  <div class="sm-stat sm-stat-sop"><div class="sm-stat-num">5</div><div class="sm-stat-label">SOP 文件</div></div>
+  <div class="sm-stat sm-stat-biz"><div class="sm-stat-num">5</div><div class="sm-stat-label">商業模組</div></div>
+</div>
+
+<!-- Legend -->
+<div class="sm-legend">
+  <div style="font-weight:700;color:var(--text);">關聯標籤：</div>
+  <div class="sm-legend-item"><div class="sm-legend-dot hw"></div>硬體</div>
+  <div class="sm-legend-item"><div class="sm-legend-dot sw"></div>軟體</div>
+  <div class="sm-legend-item"><div class="sm-legend-dot flow"></div>流程</div>
+  <div class="sm-legend-item"><div class="sm-legend-dot sop"></div>SOP</div>
+  <div class="sm-legend-item"><div class="sm-legend-dot biz"></div>商業</div>
+  <div style="margin-left:auto;font-weight:600;">☐ 未完成 &nbsp; ☑ 已完成</div>
+</div>
+
+<!-- Core flow pipeline -->
+<div style="font-size:11px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;color:var(--dim);margin-bottom:8px;display:flex;align-items:center;gap:6px;"><span style="display:inline-block;width:3px;height:12px;border-radius:2px;background:var(--green);"></span>核心營運流程</div>
+<div class="sm-pipe">
+  <div class="sm-pipe-step">
+    <div class="sm-pipe-icon">📱</div>
+    <div class="sm-pipe-label">點餐</div>
+    <div class="sm-pipe-sub">POS 收銀台<br>開始計時</div>
   </div>
-  <div class="rd-phase rd-phase-p2">
-    <div class="rd-phase-label">Phase 2 · 6 – 18 月</div>
-    <div class="rd-phase-title">標準化輸出</div>
-    <div class="rd-phase-sub">SOP 定版、供應鏈、培訓體系</div>
-    <div class="rd-phase-bar"></div>
+  <div class="sm-pipe-arrow">→</div>
+  <div class="sm-pipe-step">
+    <div class="sm-pipe-icon">📺</div>
+    <div class="sm-pipe-label">撿料站</div>
+    <div class="sm-pipe-sub">KDS 螢幕<br>備料確認</div>
   </div>
-  <div class="rd-phase rd-phase-p3">
-    <div class="rd-phase-label">Phase 3 · 18 月+</div>
-    <div class="rd-phase-title">規模化</div>
-    <div class="rd-phase-sub">設備租賃包、系統授權、更多主理人</div>
-    <div class="rd-phase-bar"></div>
+  <div class="sm-pipe-arrow">→</div>
+  <div class="sm-pipe-step">
+    <div class="sm-pipe-icon">🍲</div>
+    <div class="sm-pipe-label">滷鍋站</div>
+    <div class="sm-pipe-sub">自動升降機<br>滷製完成</div>
+  </div>
+  <div class="sm-pipe-arrow">→</div>
+  <div class="sm-pipe-step">
+    <div class="sm-pipe-icon">✅</div>
+    <div class="sm-pipe-label">出餐檢核</div>
+    <div class="sm-pipe-sub">逐項確認<br>打包完成</div>
+  </div>
+  <div class="sm-pipe-arrow">→</div>
+  <div class="sm-pipe-step">
+    <div class="sm-pipe-icon">📊</div>
+    <div class="sm-pipe-label">數據回流</div>
+    <div class="sm-pipe-sub">Dashboard<br>即時監控</div>
   </div>
 </div>
 
-<!-- Decision points -->
-<div class="rd-decisions">
-  <div class="rd-section-title">關鍵決策點（Go / No-Go）</div>
-  <div class="rd-dec-row">
-    <div class="rd-dec-item">
-      <div style="display:flex;align-items:center;width:100%;">
-        <div class="rd-dec-dot rd-dec-dot-blue">M1</div>
-        <div class="rd-dec-line"></div>
-      </div>
-      <div class="rd-dec-label">選址定案</div>
-      <div class="rd-dec-sub">競業分析<br>租金試算</div>
-      <div class="rd-dec-badge rd-dec-badge-go">GO / STOP</div>
-    </div>
-    <div class="rd-dec-item">
-      <div style="display:flex;align-items:center;width:100%;">
-        <div class="rd-dec-dot rd-dec-dot-blue">M3</div>
-        <div class="rd-dec-line"></div>
-      </div>
-      <div class="rd-dec-label">菜單驗證</div>
-      <div class="rd-dec-sub">毛利率確認<br>出餐速度測試</div>
-      <div class="rd-dec-badge rd-dec-badge-check">CHECK</div>
-    </div>
-    <div class="rd-dec-item">
-      <div style="display:flex;align-items:center;width:100%;">
-        <div class="rd-dec-dot rd-dec-dot-yellow">M6</div>
-        <div class="rd-dec-line"></div>
-      </div>
-      <div class="rd-dec-label">損益達標</div>
-      <div class="rd-dec-sub">進入Phase 2<br>或調整模型</div>
-      <div class="rd-dec-badge rd-dec-badge-go">GO / PIVOT</div>
-    </div>
-    <div class="rd-dec-item">
-      <div style="display:flex;align-items:center;width:100%;">
-        <div class="rd-dec-dot rd-dec-dot-yellow">M12</div>
-        <div class="rd-dec-line"></div>
-      </div>
-      <div class="rd-dec-label">SOP 可複製驗證</div>
-      <div class="rd-dec-sub">新人14天上手<br>品質一致性</div>
-      <div class="rd-dec-badge rd-dec-badge-check">CHECK</div>
-    </div>
-    <div class="rd-dec-item">
-      <div style="display:flex;align-items:center;width:100%;">
-        <div class="rd-dec-dot rd-dec-dot-green">M18</div>
-        <div class="rd-dec-line" style="visibility:hidden;"></div>
-      </div>
-      <div class="rd-dec-label">第一個外部主理人</div>
-      <div class="rd-dec-sub">模型對外輸出<br>進入Phase 3</div>
-      <div class="rd-dec-badge rd-dec-badge-go">GO / SCALE</div>
-    </div>
-  </div>
-</div>
+<!-- Two column layout: Hardware + Software -->
+<div class="sm-cols">
 
-<!-- Swimlane -->
-<div class="rd-section-title" style="margin-bottom:10px;">誰做什麼 · 什麼時候 · 多久</div>
-<div class="rd-swim">
-  <!-- Header row -->
-  <div class="rd-swim-head c1">角色</div>
-  <div class="rd-swim-head c2">Phase 1 &nbsp;0–6月</div>
-  <div class="rd-swim-head c3">Phase 2 &nbsp;6–18月</div>
-  <div class="rd-swim-head c4">Phase 3 &nbsp;18月+</div>
-
-  <!-- Row: 主理人 -->
-  <div class="rd-swim-role">
-    <div class="rd-swim-emoji">🧑‍💼</div>
-    <div class="rd-swim-role-name">主理人</div>
+<!-- ===== HARDWARE ===== -->
+<div class="sm-sec sm-hw">
+  <div class="sm-sec-head">
+    <span class="sm-sec-icon">🔧</span>
+    <span class="sm-sec-title">硬體 Hardware</span>
+    <span class="sm-sec-count">6 項</span>
   </div>
-  <div class="rd-swim-cell">
-    <div class="rd-task rd-task-p1">
-      <div class="rd-task-name">選址評估 &amp; 定案</div>
-      <div class="rd-task-meta"><span class="rd-dur">4–6週</span><span class="risk-r"></span></div>
+  <div class="sm-grid" style="grid-template-columns:1fr;">
+    <div class="sm-item">
+      <div class="sm-chk"></div>
+      <div class="sm-body">
+        <div class="sm-name">自動升降滷台</div>
+        <div class="sm-desc">電動升降機構，控制滷製時間與溫度</div>
+        <div class="sm-tags">
+          <span class="sm-tag sm-tag-flow">滷鍋站</span>
+          <span class="sm-tag sm-tag-sw">KDS 派單</span>
+          <span class="sm-tag sm-tag-sop">設備操作 SOP</span>
+        </div>
+      </div>
     </div>
-    <div class="rd-task rd-task-p1">
-      <div class="rd-task-name">雙品牌定位確認</div>
-      <div class="rd-task-meta"><span class="rd-dur">2–4週</span><span class="risk-y"></span></div>
+    <div class="sm-item">
+      <div class="sm-chk"></div>
+      <div class="sm-body">
+        <div class="sm-name">POS 收銀設備</div>
+        <div class="sm-desc">觸控螢幕 + 錢箱 + 出單機</div>
+        <div class="sm-tags">
+          <span class="sm-tag sm-tag-flow">點餐</span>
+          <span class="sm-tag sm-tag-sw">POS 系統</span>
+          <span class="sm-tag sm-tag-sw">財務系統</span>
+          <span class="sm-tag sm-tag-biz">雙品牌收銀</span>
+        </div>
+      </div>
     </div>
-    <div class="rd-task rd-task-p1">
-      <div class="rd-task-name">每日營運管理 &amp; 損益追蹤</div>
-      <div class="rd-task-meta"><span class="rd-dur">持續</span><span class="risk-y"></span></div>
+    <div class="sm-item">
+      <div class="sm-chk"></div>
+      <div class="sm-body">
+        <div class="sm-name">撿料站螢幕（KDS）</div>
+        <div class="sm-desc">撿料工位顯示器，即時接收訂單</div>
+        <div class="sm-tags">
+          <span class="sm-tag sm-tag-flow">撿料站</span>
+          <span class="sm-tag sm-tag-sw">KDS 派單</span>
+        </div>
+      </div>
     </div>
-    <div class="rd-task rd-task-p1">
-      <div class="rd-task-name">反饋問題回報系統方</div>
-      <div class="rd-task-meta"><span class="rd-dur">持續</span><span class="risk-g"></span></div>
+    <div class="sm-item">
+      <div class="sm-chk"></div>
+      <div class="sm-body">
+        <div class="sm-name">滷鍋站螢幕（KDS）</div>
+        <div class="sm-desc">滷鍋工位顯示器，顯示滷製狀態</div>
+        <div class="sm-tags">
+          <span class="sm-tag sm-tag-flow">滷鍋站</span>
+          <span class="sm-tag sm-tag-sw">KDS 派單</span>
+          <span class="sm-tag sm-tag-hw">自動升降滷台</span>
+        </div>
+      </div>
     </div>
-  </div>
-  <div class="rd-swim-cell">
-    <div class="rd-task rd-task-p2">
-      <div class="rd-task-name">執行 &amp; 驗證最終 SOP</div>
-      <div class="rd-task-meta"><span class="rd-dur">3個月</span><span class="risk-y"></span></div>
+    <div class="sm-item">
+      <div class="sm-chk"></div>
+      <div class="sm-body">
+        <div class="sm-name">出餐站螢幕</div>
+        <div class="sm-desc">出餐檢核用，顯示打包清單</div>
+        <div class="sm-tags">
+          <span class="sm-tag sm-tag-flow">出餐檢核</span>
+          <span class="sm-tag sm-tag-sw">檢核系統</span>
+        </div>
+      </div>
     </div>
-    <div class="rd-task rd-task-p2">
-      <div class="rd-task-name">培訓首批新員工</div>
-      <div class="rd-task-meta"><span class="rd-dur">持續</span><span class="risk-y"></span></div>
-    </div>
-    <div class="rd-task rd-task-p2">
-      <div class="rd-task-name">雙品牌社群 &amp; 外送推廣</div>
-      <div class="rd-task-meta"><span class="rd-dur">持續</span><span class="risk-y"></span></div>
-    </div>
-  </div>
-  <div class="rd-swim-cell last-col">
-    <div class="rd-task rd-task-p3">
-      <div class="rd-task-name">協助複製模型輸出</div>
-      <div class="rd-task-meta"><span class="rd-dur">持續</span><span class="risk-g"></span></div>
-    </div>
-    <div class="rd-task rd-task-p3">
-      <div class="rd-task-name">評估第二店可行性</div>
-      <div class="rd-task-meta"><span class="rd-dur">6個月+</span><span class="risk-y"></span></div>
-    </div>
-  </div>
-
-  <!-- Row: 系統方 -->
-  <div class="rd-swim-role">
-    <div class="rd-swim-emoji">⚙️</div>
-    <div class="rd-swim-role-name">系統方<br>(Jeff)</div>
-  </div>
-  <div class="rd-swim-cell">
-    <div class="rd-task rd-task-p1">
-      <div class="rd-task-name">設備安裝 &amp; 調試</div>
-      <div class="rd-task-meta"><span class="rd-dur">3–4週</span><span class="risk-r"></span></div>
-    </div>
-    <div class="rd-task rd-task-p1">
-      <div class="rd-task-name">初版 SOP 制定</div>
-      <div class="rd-task-meta"><span class="rd-dur">6–8週</span><span class="risk-y"></span></div>
-    </div>
-    <div class="rd-task rd-task-p1">
-      <div class="rd-task-name">控制系統 &amp; UI 建立</div>
-      <div class="rd-task-meta"><span class="rd-dur">2個月</span><span class="risk-y"></span></div>
-    </div>
-    <div class="rd-task rd-task-p1">
-      <div class="rd-task-name">設備異常支援 SLA</div>
-      <div class="rd-task-meta"><span class="rd-dur">持續</span><span class="risk-r"></span></div>
-    </div>
-  </div>
-  <div class="rd-swim-cell">
-    <div class="rd-task rd-task-p2">
-      <div class="rd-task-name">SOP 定版 &amp; 文件化</div>
-      <div class="rd-task-meta"><span class="rd-dur">2個月</span><span class="risk-y"></span></div>
-    </div>
-    <div class="rd-task rd-task-p2">
-      <div class="rd-task-name">供應鏈建立 &amp; 談判</div>
-      <div class="rd-task-meta"><span class="rd-dur">6個月</span><span class="risk-r"></span></div>
-    </div>
-    <div class="rd-task rd-task-p2">
-      <div class="rd-task-name">培訓體系建立</div>
-      <div class="rd-task-meta"><span class="rd-dur">3個月</span><span class="risk-y"></span></div>
-    </div>
-    <div class="rd-task rd-task-p2">
-      <div class="rd-task-name">設備 v2 優化</div>
-      <div class="rd-task-meta"><span class="rd-dur">4個月</span><span class="risk-y"></span></div>
-    </div>
-  </div>
-  <div class="rd-swim-cell last-col">
-    <div class="rd-task rd-task-p3">
-      <div class="rd-task-name">設備租賃包設計</div>
-      <div class="rd-task-meta"><span class="rd-dur">2個月</span><span class="risk-y"></span></div>
-    </div>
-    <div class="rd-task rd-task-p3">
-      <div class="rd-task-name">系統授權模型</div>
-      <div class="rd-task-meta"><span class="rd-dur">3個月</span><span class="risk-y"></span></div>
-    </div>
-    <div class="rd-task rd-task-p3">
-      <div class="rd-task-name">新主理人導入支援</div>
-      <div class="rd-task-meta"><span class="rd-dur">持續</span><span class="risk-g"></span></div>
-    </div>
-  </div>
-
-  <!-- Row: 現場人員 -->
-  <div class="rd-swim-role">
-    <div class="rd-swim-emoji">👨‍🍳</div>
-    <div class="rd-swim-role-name">現場<br>人員</div>
-  </div>
-  <div class="rd-swim-cell">
-    <div class="rd-task rd-task-p1">
-      <div class="rd-task-name">崗位 SOP 培訓</div>
-      <div class="rd-task-meta"><span class="rd-dur">2週</span><span class="risk-y"></span></div>
-    </div>
-    <div class="rd-task rd-task-p1">
-      <div class="rd-task-name">執行出餐流程、回報問題</div>
-      <div class="rd-task-meta"><span class="rd-dur">持續</span><span class="risk-g"></span></div>
-    </div>
-  </div>
-  <div class="rd-swim-cell">
-    <div class="rd-task rd-task-p2">
-      <div class="rd-task-name">跨崗位輪替訓練</div>
-      <div class="rd-task-meta"><span class="rd-dur">1個月</span><span class="risk-y"></span></div>
-    </div>
-    <div class="rd-task rd-task-p2">
-      <div class="rd-task-name">執行最終版 SOP</div>
-      <div class="rd-task-meta"><span class="rd-dur">持續</span><span class="risk-g"></span></div>
-    </div>
-  </div>
-  <div class="rd-swim-cell last-col">
-    <div class="rd-task rd-task-p3">
-      <div class="rd-task-name">協助培訓新店人員</div>
-      <div class="rd-task-meta"><span class="rd-dur">持續</span><span class="risk-g"></span></div>
-    </div>
-  </div>
-
-  <!-- Row: 外部夥伴 -->
-  <div class="rd-swim-role" style="border-bottom:none;">
-    <div class="rd-swim-emoji">🤝</div>
-    <div class="rd-swim-role-name">外部<br>夥伴</div>
-  </div>
-  <div class="rd-swim-cell last-row">
-    <div class="rd-task rd-task-p1">
-      <div class="rd-task-name">外送平台雙品牌上架</div>
-      <div class="rd-task-meta"><span class="rd-dur">2–4週</span><span class="risk-y"></span></div>
-    </div>
-    <div class="rd-task rd-task-p1">
-      <div class="rd-task-name">初期供應商接洽</div>
-      <div class="rd-task-meta"><span class="rd-dur">6–8週</span><span class="risk-r"></span></div>
-    </div>
-  </div>
-  <div class="rd-swim-cell last-row">
-    <div class="rd-task rd-task-p2">
-      <div class="rd-task-name">供應鏈框架協議</div>
-      <div class="rd-task-meta"><span class="rd-dur">3個月</span><span class="risk-r"></span></div>
-    </div>
-    <div class="rd-task rd-task-p2">
-      <div class="rd-task-name">雙品牌聯合推廣</div>
-      <div class="rd-task-meta"><span class="rd-dur">持續</span><span class="risk-y"></span></div>
-    </div>
-  </div>
-  <div class="rd-swim-cell last-row last-col">
-    <div class="rd-task rd-task-p3">
-      <div class="rd-task-name">規模採購框架協議</div>
-      <div class="rd-task-meta"><span class="rd-dur">持續</span><span class="risk-y"></span></div>
-    </div>
-    <div class="rd-task rd-task-p3">
-      <div class="rd-task-name">融資 / 設備分期支援</div>
-      <div class="rd-task-meta"><span class="rd-dur">Phase 3 啟動</span><span class="risk-y"></span></div>
+    <div class="sm-item">
+      <div class="sm-chk"></div>
+      <div class="sm-body">
+        <div class="sm-name">網路基礎設施</div>
+        <div class="sm-desc">路由器 / 交換器 / Wi-Fi，串接所有設備</div>
+        <div class="sm-tags">
+          <span class="sm-tag sm-tag-sw">全系統</span>
+          <span class="sm-tag sm-tag-hw">所有螢幕</span>
+        </div>
+      </div>
     </div>
   </div>
 </div>
 
-<!-- Risk register -->
-<div class="rd-section-title">風險清單</div>
-<div style="display:flex;gap:8px;margin-bottom:10px;font-size:10px;color:var(--dim);align-items:center;">
-  <span class="risk-r"></span>高風險 &nbsp;
-  <span class="risk-y"></span>中風險 &nbsp;
-  <span class="risk-g"></span>低風險
+<!-- ===== SOFTWARE ===== -->
+<div class="sm-sec sm-sw">
+  <div class="sm-sec-head">
+    <span class="sm-sec-icon">💻</span>
+    <span class="sm-sec-title">軟體 Software</span>
+    <span class="sm-sec-count">7 項</span>
+  </div>
+  <div class="sm-grid" style="grid-template-columns:1fr;">
+    <div class="sm-item">
+      <div class="sm-chk"></div>
+      <div class="sm-body">
+        <div class="sm-name">POS 收銀系統</div>
+        <div class="sm-desc">點餐介面、品項管理、結帳、開始計時</div>
+        <div class="sm-tags">
+          <span class="sm-tag sm-tag-hw">POS 設備</span>
+          <span class="sm-tag sm-tag-flow">點餐</span>
+          <span class="sm-tag sm-tag-sw">財務系統</span>
+          <span class="sm-tag sm-tag-sw">CRM</span>
+        </div>
+      </div>
+    </div>
+    <div class="sm-item">
+      <div class="sm-chk"></div>
+      <div class="sm-body">
+        <div class="sm-name">KDS 工作站派單系統</div>
+        <div class="sm-desc">訂單自動分派到撿料站 / 滷鍋站 / 出餐站</div>
+        <div class="sm-tags">
+          <span class="sm-tag sm-tag-hw">撿料站螢幕</span>
+          <span class="sm-tag sm-tag-hw">滷鍋站螢幕</span>
+          <span class="sm-tag sm-tag-flow">撿料站</span>
+          <span class="sm-tag sm-tag-flow">滷鍋站</span>
+        </div>
+      </div>
+    </div>
+    <div class="sm-item">
+      <div class="sm-chk"></div>
+      <div class="sm-body">
+        <div class="sm-name">出餐檢核系統</div>
+        <div class="sm-desc">打包清單逐項確認，防止漏裝</div>
+        <div class="sm-tags">
+          <span class="sm-tag sm-tag-hw">出餐站螢幕</span>
+          <span class="sm-tag sm-tag-flow">出餐檢核</span>
+          <span class="sm-tag sm-tag-sop">出餐 SOP</span>
+        </div>
+      </div>
+    </div>
+    <div class="sm-item">
+      <div class="sm-chk"></div>
+      <div class="sm-body">
+        <div class="sm-name">財務系統</div>
+        <div class="sm-desc">POS 營收自動入帳，每日對帳</div>
+        <div class="sm-tags">
+          <span class="sm-tag sm-tag-sw">POS 系統</span>
+          <span class="sm-tag sm-tag-sw">Dashboard</span>
+          <span class="sm-tag sm-tag-biz">損益追蹤</span>
+        </div>
+      </div>
+    </div>
+    <div class="sm-item">
+      <div class="sm-chk"></div>
+      <div class="sm-body">
+        <div class="sm-name">CRM 客戶管理</div>
+        <div class="sm-desc">綁定客戶電話，消費紀錄、回購分析</div>
+        <div class="sm-tags">
+          <span class="sm-tag sm-tag-sw">POS 系統</span>
+          <span class="sm-tag sm-tag-biz">行銷推播</span>
+          <span class="sm-tag sm-tag-biz">雙品牌</span>
+        </div>
+      </div>
+    </div>
+    <div class="sm-item">
+      <div class="sm-chk"></div>
+      <div class="sm-body">
+        <div class="sm-name">計時追蹤系統</div>
+        <div class="sm-desc">全流程計時：點餐→撿料→滷製→出餐</div>
+        <div class="sm-tags">
+          <span class="sm-tag sm-tag-flow">全流程</span>
+          <span class="sm-tag sm-tag-sw">Dashboard</span>
+        </div>
+      </div>
+    </div>
+    <div class="sm-item">
+      <div class="sm-chk"></div>
+      <div class="sm-body">
+        <div class="sm-name">主理人 Dashboard</div>
+        <div class="sm-desc">即時監控：營收、效率、庫存、客戶數據</div>
+        <div class="sm-tags">
+          <span class="sm-tag sm-tag-sw">財務系統</span>
+          <span class="sm-tag sm-tag-sw">CRM</span>
+          <span class="sm-tag sm-tag-sw">計時系統</span>
+          <span class="sm-tag sm-tag-flow">數據回流</span>
+        </div>
+      </div>
+    </div>
+  </div>
 </div>
-<div class="rd-risks">
-  <div class="rd-risk-card">
-    <div class="rd-risk-header"><span class="rd-risk-sev rd-risk-sev-h">高</span><span class="rd-risk-name">選址失誤 → 客流不足</span></div>
-    <div class="rd-risk-desc">位置客流量低估，試營運期間無法達到損益平衡，資金提前耗盡。</div>
-    <div class="rd-risk-mit">提前做3個月競業流量分析；設定試營運90天評估關卡；預留6個月備用金。</div>
+
+</div><!-- end sm-cols -->
+
+<!-- Two column layout: Flow + SOP -->
+<div class="sm-cols" style="margin-top:20px;">
+
+<!-- ===== FLOW ===== -->
+<div class="sm-sec sm-flow">
+  <div class="sm-sec-head">
+    <span class="sm-sec-icon">🔄</span>
+    <span class="sm-sec-title">營運流程 Flow</span>
+    <span class="sm-sec-count">5 站</span>
   </div>
-  <div class="rd-risk-card">
-    <div class="rd-risk-header"><span class="rd-risk-sev rd-risk-sev-h">高</span><span class="rd-risk-name">設備可靠性不足 → 營運中斷</span></div>
-    <div class="rd-risk-desc">自製設備在高頻使用下出現故障，導致出餐停擺，嚴重影響口碑與營收。</div>
-    <div class="rd-risk-mit">建立備機庫存；簽訂4小時內維修 SLA；Phase 1 保留每月設備巡檢。</div>
+  <div class="sm-grid" style="grid-template-columns:1fr;">
+    <div class="sm-item">
+      <div class="sm-chk"></div>
+      <div class="sm-body">
+        <div class="sm-name">① 點餐流程</div>
+        <div class="sm-desc">客戶下單 → POS 建立訂單 → 系統開始計時 → 綁定客戶電話</div>
+        <div class="sm-tags">
+          <span class="sm-tag sm-tag-hw">POS 設備</span>
+          <span class="sm-tag sm-tag-sw">POS 系統</span>
+          <span class="sm-tag sm-tag-sw">CRM</span>
+          <span class="sm-tag sm-tag-sop">營運 SOP</span>
+        </div>
+      </div>
+    </div>
+    <div class="sm-item">
+      <div class="sm-chk"></div>
+      <div class="sm-body">
+        <div class="sm-name">② 撿料流程</div>
+        <div class="sm-desc">KDS 派單 → 撿料手看螢幕備料 → 逐項完成 → 按「確認」流轉</div>
+        <div class="sm-tags">
+          <span class="sm-tag sm-tag-hw">撿料站螢幕</span>
+          <span class="sm-tag sm-tag-sw">KDS 派單</span>
+          <span class="sm-tag sm-tag-sop">出餐 SOP</span>
+        </div>
+      </div>
+    </div>
+    <div class="sm-item">
+      <div class="sm-chk"></div>
+      <div class="sm-body">
+        <div class="sm-name">③ 滷製流程</div>
+        <div class="sm-desc">接收已備料 → 放入自動升降機 → 滷製完成 → 按「出餐」</div>
+        <div class="sm-tags">
+          <span class="sm-tag sm-tag-hw">自動升降滷台</span>
+          <span class="sm-tag sm-tag-hw">滷鍋站螢幕</span>
+          <span class="sm-tag sm-tag-sw">KDS 派單</span>
+          <span class="sm-tag sm-tag-sop">設備操作 SOP</span>
+        </div>
+      </div>
+    </div>
+    <div class="sm-item">
+      <div class="sm-chk"></div>
+      <div class="sm-body">
+        <div class="sm-name">④ 出餐檢核</div>
+        <div class="sm-desc">系統跳出打包清單 → 逐項確認食材 → 全數打勾 → 完成出餐</div>
+        <div class="sm-tags">
+          <span class="sm-tag sm-tag-hw">出餐站螢幕</span>
+          <span class="sm-tag sm-tag-sw">檢核系統</span>
+          <span class="sm-tag sm-tag-sop">出餐 SOP</span>
+        </div>
+      </div>
+    </div>
+    <div class="sm-item">
+      <div class="sm-chk"></div>
+      <div class="sm-body">
+        <div class="sm-name">⑤ 數據回流</div>
+        <div class="sm-desc">全程計時數據 + 營收 + 客戶資料 → Dashboard 即時呈現</div>
+        <div class="sm-tags">
+          <span class="sm-tag sm-tag-sw">Dashboard</span>
+          <span class="sm-tag sm-tag-sw">財務系統</span>
+          <span class="sm-tag sm-tag-sw">CRM</span>
+          <span class="sm-tag sm-tag-biz">損益追蹤</span>
+        </div>
+      </div>
+    </div>
   </div>
-  <div class="rd-risk-card">
-    <div class="rd-risk-header"><span class="rd-risk-sev rd-risk-sev-m">中</span><span class="rd-risk-name">雙品牌切換混亂 → 出餐錯誤</span></div>
-    <div class="rd-risk-desc">午晚餐品牌切換時，備料區與設備共用造成人員混淆，出錯率上升。</div>
-    <div class="rd-risk-mit">嚴格時段分離（中間30分鐘緩衝）；視覺標識區分兩品牌區域；SOP 分冊管理。</div>
+</div>
+
+<!-- ===== SOP ===== -->
+<div class="sm-sec sm-sop">
+  <div class="sm-sec-head">
+    <span class="sm-sec-icon">📋</span>
+    <span class="sm-sec-title">SOP 文件</span>
+    <span class="sm-sec-count">5 份</span>
   </div>
-  <div class="rd-risk-card">
-    <div class="rd-risk-header"><span class="rd-risk-sev rd-risk-sev-m">中</span><span class="rd-risk-name">人員流動高 → 培訓成本失控</span></div>
-    <div class="rd-risk-desc">餐飲業人員流動率本就偏高，若SOP複雜，每次替換人員成本過高。</div>
-    <div class="rd-risk-mit">SOP 設計以「14天上手」為目標；影片化培訓材料；崗位輪替降低單點依賴。</div>
+  <div class="sm-grid" style="grid-template-columns:1fr;">
+    <div class="sm-item">
+      <div class="sm-chk"></div>
+      <div class="sm-body">
+        <div class="sm-name">出餐流程 SOP</div>
+        <div class="sm-desc">備料 → 組裝 → 出餐，每步有標準時間和品質基準</div>
+        <div class="sm-tags">
+          <span class="sm-tag sm-tag-flow">撿料站</span>
+          <span class="sm-tag sm-tag-flow">滷鍋站</span>
+          <span class="sm-tag sm-tag-flow">出餐檢核</span>
+        </div>
+      </div>
+    </div>
+    <div class="sm-item">
+      <div class="sm-chk"></div>
+      <div class="sm-body">
+        <div class="sm-name">設備操作 SOP</div>
+        <div class="sm-desc">自動升降滷台操作手冊 + 異常處理流程</div>
+        <div class="sm-tags">
+          <span class="sm-tag sm-tag-hw">自動升降滷台</span>
+          <span class="sm-tag sm-tag-flow">滷鍋站</span>
+        </div>
+      </div>
+    </div>
+    <div class="sm-item">
+      <div class="sm-chk"></div>
+      <div class="sm-body">
+        <div class="sm-name">日常營運 SOP</div>
+        <div class="sm-desc">開店準備 / 品牌切換 / 交接班 / 打烊收尾</div>
+        <div class="sm-tags">
+          <span class="sm-tag sm-tag-flow">點餐</span>
+          <span class="sm-tag sm-tag-biz">雙品牌</span>
+        </div>
+      </div>
+    </div>
+    <div class="sm-item">
+      <div class="sm-chk"></div>
+      <div class="sm-body">
+        <div class="sm-name">清潔流程 SOP</div>
+        <div class="sm-desc">日清 / 週清 / 月清，檢核表管理</div>
+        <div class="sm-tags">
+          <span class="sm-tag sm-tag-hw">全設備</span>
+        </div>
+      </div>
+    </div>
+    <div class="sm-item">
+      <div class="sm-chk"></div>
+      <div class="sm-body">
+        <div class="sm-name">培訓 SOP</div>
+        <div class="sm-desc">14 天上手目標，影片化教材，崗位輪替訓練</div>
+        <div class="sm-tags">
+          <span class="sm-tag sm-tag-sw">KDS 操作</span>
+          <span class="sm-tag sm-tag-sw">POS 操作</span>
+          <span class="sm-tag sm-tag-biz">可複製</span>
+        </div>
+      </div>
+    </div>
   </div>
-  <div class="rd-risk-card">
-    <div class="rd-risk-header"><span class="rd-risk-sev rd-risk-sev-m">中</span><span class="rd-risk-name">供應鏈不穩定 → 缺貨/漲價</span></div>
-    <div class="rd-risk-desc">核心食材單一供應商、季節性缺貨或價格波動，直接衝擊毛利與出餐能力。</div>
-    <div class="rd-risk-mit">主副供應商雙軌制；關鍵食材保留7天安全庫存；每季重談合約鎖定年度價格。</div>
+</div>
+
+</div><!-- end sm-cols -->
+
+<!-- ===== BUSINESS ===== -->
+<div class="sm-sec sm-biz" style="margin-top:20px;">
+  <div class="sm-sec-head">
+    <span class="sm-sec-icon">💼</span>
+    <span class="sm-sec-title">商業模組 Business</span>
+    <span class="sm-sec-count">5 項</span>
   </div>
-  <div class="rd-risk-card">
-    <div class="rd-risk-header"><span class="rd-risk-sev rd-risk-sev-m">中</span><span class="rd-risk-name">外送平台競爭 → 曝光不足</span></div>
-    <div class="rd-risk-desc">外送平台演算法競爭激烈，新店初期評價少、排名低，前3個月獲客成本極高。</div>
-    <div class="rd-risk-mit">雙品牌同時上架倍增曝光；前3個月優惠策略衝評價；社群私域引流降低平台依賴。</div>
-  </div>
-  <div class="rd-risk-card">
-    <div class="rd-risk-header"><span class="rd-risk-sev rd-risk-sev-l">低</span><span class="rd-risk-name">SOP 被競業抄襲</span></div>
-    <div class="rd-risk-desc">標準化SOP文件外流，競業直接複製模型，降低差異化優勢。</div>
-    <div class="rd-risk-mit">核心優勢在設備（難以複製）而非文件；SOP 文件分級管理；技術護城河持續加深。</div>
-  </div>
-  <div class="rd-risk-card">
-    <div class="rd-risk-header"><span class="rd-risk-sev rd-risk-sev-l">低</span><span class="rd-risk-name">資本需求在 Phase 3 放大</span></div>
-    <div class="rd-risk-desc">規模化需要製造更多設備、提供租賃，資本需求快速增加而現金流滯後。</div>
-    <div class="rd-risk-mit">Phase 2 就開始建立融資管道；設備採租賃優先於買斷；控制每月新增主理人數量。</div>
+  <div class="sm-grid">
+    <div class="sm-item">
+      <div class="sm-chk"></div>
+      <div class="sm-body">
+        <div class="sm-name">單店雙品牌模型</div>
+        <div class="sm-desc">午餐品牌（高翻桌）+ 晚餐品牌（高毛利），一份租金兩份營收</div>
+        <div class="sm-tags">
+          <span class="sm-tag sm-tag-sw">POS 系統</span>
+          <span class="sm-tag sm-tag-sop">營運 SOP</span>
+          <span class="sm-tag sm-tag-biz">外送平台</span>
+        </div>
+      </div>
+    </div>
+    <div class="sm-item">
+      <div class="sm-chk"></div>
+      <div class="sm-body">
+        <div class="sm-name">外送平台雙品牌上架</div>
+        <div class="sm-desc">兩個品牌同時上架，倍增曝光與流量</div>
+        <div class="sm-tags">
+          <span class="sm-tag sm-tag-biz">雙品牌</span>
+          <span class="sm-tag sm-tag-sw">POS 系統</span>
+        </div>
+      </div>
+    </div>
+    <div class="sm-item">
+      <div class="sm-chk"></div>
+      <div class="sm-body">
+        <div class="sm-name">供應鏈建立</div>
+        <div class="sm-desc">主副供應商雙軌制，核心食材安全庫存</div>
+        <div class="sm-tags">
+          <span class="sm-tag sm-tag-sop">出餐 SOP</span>
+          <span class="sm-tag sm-tag-sw">財務系統</span>
+        </div>
+      </div>
+    </div>
+    <div class="sm-item">
+      <div class="sm-chk"></div>
+      <div class="sm-body">
+        <div class="sm-name">設備租賃模型</div>
+        <div class="sm-desc">主理人月租設備，不用一次買斷，降低開店門檻</div>
+        <div class="sm-tags">
+          <span class="sm-tag sm-tag-hw">自動升降滷台</span>
+          <span class="sm-tag sm-tag-hw">全套 KDS</span>
+        </div>
+      </div>
+    </div>
+    <div class="sm-item">
+      <div class="sm-chk"></div>
+      <div class="sm-body">
+        <div class="sm-name">模型可複製驗證</div>
+        <div class="sm-desc">SOP + 設備 + 數位系統打包，新主理人可快速導入</div>
+        <div class="sm-tags">
+          <span class="sm-tag sm-tag-sop">全部 SOP</span>
+          <span class="sm-tag sm-tag-sw">全系統</span>
+          <span class="sm-tag sm-tag-hw">全設備</span>
+        </div>
+      </div>
+    </div>
   </div>
 </div>
 
