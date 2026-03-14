@@ -107,8 +107,8 @@
 <!-- Summary stats -->
 <div class="sm-summary">
   <div class="sm-stat sm-stat-hw"><div class="sm-stat-num">6</div><div class="sm-stat-label">硬體項目</div></div>
-  <div class="sm-stat sm-stat-sw"><div class="sm-stat-num">9</div><div class="sm-stat-label">軟體模組</div></div>
-  <div class="sm-stat sm-stat-flow"><div class="sm-stat-num">5</div><div class="sm-stat-label">營運流程</div></div>
+  <div class="sm-stat sm-stat-sw"><div class="sm-stat-num">9</div><div class="sm-stat-label">軟體 (5完成)</div></div>
+  <div class="sm-stat sm-stat-flow"><div class="sm-stat-num">5</div><div class="sm-stat-label">流程 (3完成)</div></div>
   <div class="sm-stat sm-stat-sop"><div class="sm-stat-num">5</div><div class="sm-stat-label">SOP 文件</div></div>
   <div class="sm-stat sm-stat-biz"><div class="sm-stat-num">5</div><div class="sm-stat-label">商業模組</div></div>
 </div>
@@ -250,7 +250,7 @@
     <span class="sm-sec-count">9 項</span>
   </div>
   <div class="sm-grid" style="grid-template-columns:1fr;">
-    <div class="sm-item">
+    <div class="sm-item done">
       <div class="sm-chk"></div>
       <div class="sm-body">
         <div class="sm-name">POS 收銀系統</div>
@@ -263,7 +263,7 @@
         </div>
       </div>
     </div>
-    <div class="sm-item">
+    <div class="sm-item done">
       <div class="sm-chk"></div>
       <div class="sm-body">
         <div class="sm-name">KDS 工作站派單系統</div>
@@ -312,7 +312,7 @@
         </div>
       </div>
     </div>
-    <div class="sm-item">
+    <div class="sm-item done">
       <div class="sm-chk"></div>
       <div class="sm-body">
         <div class="sm-name">計時追蹤系統</div>
@@ -377,7 +377,7 @@
     <span class="sm-sec-count">5 站</span>
   </div>
   <div class="sm-grid" style="grid-template-columns:1fr;">
-    <div class="sm-item">
+    <div class="sm-item done">
       <div class="sm-chk"></div>
       <div class="sm-body">
         <div class="sm-name">① 點餐流程</div>
@@ -390,7 +390,7 @@
         </div>
       </div>
     </div>
-    <div class="sm-item">
+    <div class="sm-item done">
       <div class="sm-chk"></div>
       <div class="sm-body">
         <div class="sm-name">② 撿料流程</div>
@@ -402,7 +402,7 @@
         </div>
       </div>
     </div>
-    <div class="sm-item">
+    <div class="sm-item done">
       <div class="sm-chk"></div>
       <div class="sm-body">
         <div class="sm-name">③ 滷製流程</div>
