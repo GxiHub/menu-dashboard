@@ -48,18 +48,33 @@ def _edit_dialog():
                 product_id   = st.text_input("產品編號", value=_ss(row.get("產品編號")))
                 unit         = st.text_input("單位數量", value=_ss(row.get("單位")))
         with tab_price:
+            sale_price = st.number_input("產品售價", value=_sf(row.get("產品售價")), min_value=0.0, step=1.0)
+            st.markdown("---")
+            st.markdown("**📦 模式一：箱裝（麵、罐頭、包裝食品）**")
             c1, c2 = st.columns(2)
-            with c1: sale_price = st.number_input("產品售價", value=_sf(row.get("產品售價")), min_value=0.0, step=1.0)
-            with c2: pkg_price  = st.number_input("單包進貨價", value=_sf(row.get("單包進貨價")), min_value=0.0, step=0.1)
-            c1, c2 = st.columns(2)
-            with c1: unit_grams = st.number_input("商品單位克數 (g)", value=_sf(row.get("商品單位克數")), min_value=0.0, step=1.0)
-            with c2: pkg_weight = st.number_input("單包重量 (g)", value=_sf(row.get("單包重量")), min_value=0.0, step=1.0)
-            if pkg_weight > 0 and unit_grams > 0 and pkg_price > 0:
-                calc_cost = round(pkg_price * (unit_grams / pkg_weight), 2)
-                st.info(f"📊 單位成本 = {pkg_price} × ({unit_grams}g / {pkg_weight}g) = **{calc_cost} 元**")
+            with c1: box_price = st.number_input("單箱進貨價", value=_sf(row.get("單箱進貨價")), min_value=0.0, step=0.1, placeholder="整箱多少錢")
+            with c2: box_qty   = st.number_input("單箱有幾包", value=_sf(row.get("單箱有幾包")), min_value=0.0, step=1.0, placeholder="幾包 / 幾顆")
+            if box_price > 0 and box_qty > 0:
+                calc_cost_m1 = round(box_price / box_qty, 2)
+                st.info(f"📊 單位成本 = {box_price} ÷ {int(box_qty)} = **{calc_cost_m1} 元**")
             else:
-                calc_cost = _sf(row.get("單位成本"))
-                st.info(f"📊 單位成本（現有）：{calc_cost} 元（請填入重量以自動計算）")
+                calc_cost_m1 = None
+            st.markdown("---")
+            st.markdown("**⚖️ 模式二：重量計算（肉、食材）**")
+            c1, c2 = st.columns(2)
+            with c1: pkg_price  = st.number_input("單包進貨價", value=_sf(row.get("單包進貨價")), min_value=0.0, step=0.1, placeholder="這包多少錢")
+            with c2: pkg_weight = st.number_input("單包重量 (g)", value=_sf(row.get("單包重量")), min_value=0.0, step=1.0, placeholder="這包幾克")
+            c1, c2 = st.columns(2)
+            with c1: unit_tael  = st.number_input("商品單位兩數", value=_sf(row.get("商品單位兩數")), min_value=0.0, step=0.5, placeholder="幾兩（1兩=37.5g）")
+            with c2: pkg_servings = st.number_input("單包份數", value=_sf(row.get("單包份數")), min_value=0.0, step=1.0, placeholder="這包有幾份")
+            derived_grams = round(unit_tael * 37.5, 2) if unit_tael > 0 else 0.0
+            unit_grams = st.number_input("商品單位克數 (g)", value=_sf(row.get("商品單位克數")) or derived_grams, min_value=0.0, step=1.0, placeholder="或直接填克數（1兩自動帶入）")
+            if pkg_price > 0 and pkg_weight > 0 and unit_grams > 0:
+                calc_cost_m2 = round(pkg_price * (unit_grams / pkg_weight), 2)
+                st.info(f"📊 單位成本 = {pkg_price} × ({unit_grams}g / {pkg_weight}g) = **{calc_cost_m2} 元**")
+            else:
+                calc_cost_m2 = None
+            st.markdown("---")
             price_note = st.text_input("售價備註", value=_ss(row.get("售價備註")))
         with tab_status:
             c1, c2, c3 = st.columns(3)
@@ -76,12 +91,21 @@ def _edit_dialog():
         df_new.at[idx, "產品名稱"]     = product_name
         df_new.at[idx, "分類"]         = category
         df_new.at[idx, "廠商"]         = vendor
-        unit_cost = round(pkg_price * (unit_grams / pkg_weight), 2) if pkg_weight > 0 and unit_grams > 0 and pkg_price > 0 else _sf(row.get("單位成本"))
+        if calc_cost_m1 is not None:
+            unit_cost = calc_cost_m1
+        elif calc_cost_m2 is not None:
+            unit_cost = calc_cost_m2
+        else:
+            unit_cost = _sf(row.get("單位成本"))
         df_new.at[idx, "產品售價"]     = sale_price
         df_new.at[idx, "單位成本"]     = unit_cost
+        df_new.at[idx, "單箱進貨價"]   = box_price
+        df_new.at[idx, "單箱有幾包"]   = box_qty
         df_new.at[idx, "單包進貨價"]   = pkg_price
         df_new.at[idx, "商品單位克數"] = unit_grams
+        df_new.at[idx, "商品單位兩數"] = unit_tael
         df_new.at[idx, "單包重量"]     = pkg_weight
+        df_new.at[idx, "單包份數"]     = pkg_servings
         df_new.at[idx, "單位"]         = unit
         df_new.at[idx, "售價備註"]     = price_note
         df_new.at[idx, "是否上架"]     = 1.0 if is_available else 0.0
