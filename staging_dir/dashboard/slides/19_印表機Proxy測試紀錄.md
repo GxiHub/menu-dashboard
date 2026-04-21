@@ -88,3 +88,68 @@ POS (tong.tfooddata.com)        ─┘
 
 ### 結果
 ✅ 版面恢復正常，金額和訂單號完整顯示
+
+---
+
+## UberEats 訂單自動整合（2026-04-21）
+
+### 架構
+
+```
+UberEats 平板出單 → pi52 proxy 攔截 ESC/POS → 儲存 PNG
+                                                    ↓
+pi53 ubereats-sync 服務（每 5 秒）
+→ SSH 到 pi52 跑 OCR（Tesseract + chi_tra）
+→ 解析訂單號、品項、金額
+→ 自動建立到 luwei-manager 訂單列表
+```
+
+### 關鍵檔案
+
+| 檔案 | 位置 | 說明 |
+|------|------|------|
+| ocr_helper.py | pi52:/home/pi52/ | OCR 解析 + 輸出 JSON |
+| ubereats_auto.py | pi53:/home/pi53/ | 主監控腳本 |
+| ubereats-sync.service | pi53 systemd | 開機自動啟動 |
+
+### OCR 技術細節
+
+- Tesseract 裝在 **pi52**（pi53 安裝失敗）
+- pi53 透過 SSH 呼叫 pi52 的 ocr_helper.py
+- Header 區域（白字黑底）需反轉後再 OCR 才能讀取訂單號
+- 訂單號格式：4-8 個英數字（含 2+ 大寫字母），如 8EE80、A48BE
+- 已知品項對照表：18 種 UberEats 英文品名 → luwei-manager product_id
+
+### 已驗證
+
+✅ 訂單號（如 8EE80）自動帶入  
+✅ 金額正確（已付金額）  
+✅ 品項自動對應 luwei-manager 商品  
+✅ 訂單出現在 pos/orders 列表  
+⚠️ 客人名 OCR 不穩定（深色背景白字難辨）
+
+---
+
+## Reboot 後持續運作確認（2026-04-21）
+
+### 設定完成
+
+| 項目 | 狀態 |
+|------|------|
+| pi52 `printer-proxy.service` | ✅ enabled，reboot 後自動啟動 |
+| pi52 IP | ✅ 改為**靜態 192.168.1.109**（防止 DHCP 變動） |
+| pi54 `printer-proxy.service` | ✅ disabled（不再搶佔印表機） |
+
+### UberEats 自動整合待辦
+
+- 目前狀況：訂單號 ✅、金額 ✅、有英文名的品項 ✅、純中文品項 OCR 不準確
+- 改善方向：放大圖片 3x OCR + 保留 PRODUCT_MAP 對英文品名
+- 目標：進 KDS + 訂單紀錄（待處理）
+
+### Reboot 實測結果（2026-04-21 13:38）
+
+✅ pi52 重開機後：
+- IP 維持 192.168.1.109（靜態設定生效）
+- printer-proxy 自動啟動（13:38:24 BST）
+- 印表機 5 秒內自動重連（13:38:36）
+- **列印功能完全恢復，無需手動操作**
