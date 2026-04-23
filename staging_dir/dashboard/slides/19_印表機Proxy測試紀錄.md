@@ -304,3 +304,98 @@ CORRECTIONS = {
 | ubereats-sync 持續穩定運作 | ✅ |
 | 菜單比對改善 OCR 準確率 | 待實作 |
 | 錯誤修正字典 | 待實作 |
+
+---
+
+## 版本紀錄（2026-04-22 完整改版）
+
+### GitHub commit: b520861
+**repo:** GxiHub/raspi-system
+
+### 檔案清單
+
+| 檔案 | 位置 | 說明 |
+|------|------|------|
+| proxy.py | pi52:/home/pi52/ | 印表機 proxy（修圖片截斷）|
+| ocr_helper.py | pi52:/home/pi52/ | OCR 解析（GPT-4o Vision）|
+| ubereats_auto.py | pi53:/home/pi53/ | 自動整合主程式 |
+
+---
+
+## 缺單根本原因分析（39833、29755、5048C）
+
+### 事件時間軸（2026-04-22）
+
+| 時間 | 事件 |
+|------|------|
+| ~21:00 | .119 平板送出全零空白資料 → proxy 卡住 |
+| ~21:10 | proxy 被手動重啟，心跳恢復 |
+| 21:12 | 訂單 5048C 來，proxy 在線，**但平板沒有連線** |
+| 21:37 | 訂單 29755 來，同上 |
+| 21:59 | 訂單 39833 來，同上 |
+
+### 診斷結論
+
+proxy log 在 21:10～22:05 有完整心跳（代表 proxy + 印表機連線正常），但完全沒有平板的 DISCOVER 或 TCP 連線。
+
+**原因：UberEats app 在 proxy 重啟斷線後不會自動重試掃描**，訂單通知雖然到了平板，但 app 不知道印表機已恢復，不會主動再掃。
+
+### 影響範圍
+
+- pi52 orders.db 沒有這三筆圖片記錄
+- luwei-manager 也沒有對應訂單
+- 這三單在系統中完全遺失
+
+---
+
+## 解決方案
+
+### 短期（立即可用）
+proxy 重啟後，手動重開兩台平板的 UberEats app，讓 app 重新掃描印表機。
+
+### 長期（待實作）
+proxy 啟動時主動廣播 UDP ENPC DISCOVER 封包，讓平板即時收到「印表機上線」通知，不需等 app 自己定時掃描。
+
+實作位置：`proxy.py` 啟動函式，在 printer 連線建立後，送一次 ENPC DISCOVER 廣播到 192.168.1.255:3289。
+
+---
+
+## 今日 OCR 版本說明
+
+### 架構
+```
+UberEats 收據 PNG
+    ↓
+pi52 ocr_helper.py (GPT-4o Vision)
+    ↓ JSON
+pi53 ubereats_auto.py
+    ↓
+luwei-manager DB (kitchen_status=picking)
+    ↓
+KDS /kitchen/picking
+```
+
+### OCR 成本
+- 模型：gpt-4o（完整版，非 mini）
+- 費用：約 $0.01 USD / 張
+- API key：pi52:/home/pi52/.env（key 名：pi52-ocr）
+
+### 已知修正項目（OCR_FIXES）
+
+| 誤讀 | 正確 |
+|------|------|
+| 玉子麵 | 王子麵 |
+| 活力蔬菜白 | 活力滷蛋白 |
+| 活力漸蛋白 | 活力滷蛋白 |
+| 活力嫩蛋白 | 活力滷蛋白 |
+| 脆脆得捲 | 脆脆杏鮑菇 |
+| 豬蹄肉 | 豬腱肉 |
+
+---
+
+## 待實作清單
+
+- [ ] proxy 啟動廣播 ENPC，解決重啟後平板不重連問題
+- [ ] POS 改為第三台 client，統一走 TCP 9100
+- [ ] .119 平板 UberEats app 開啟自動列印
+- [ ] 遇到新 OCR 錯誤時持續更新 OCR_FIXES
